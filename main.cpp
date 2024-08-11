@@ -22,6 +22,7 @@ int main(int argc, char *argv[]){
 
     // some photo mosaic driven code here
     cout << "fuck cpc\n";
+    cout << "fuck cpc's ass\n";
 
     // more ...
     return 0;
