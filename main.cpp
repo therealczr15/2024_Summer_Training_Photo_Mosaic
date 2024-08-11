@@ -26,6 +26,7 @@ int main(int argc, char *argv[]){
 
     // more ...
     cout << "hello world!" << endl;
+    cout << "It's Mygo!!" << endl;
 
     return 0;
 }
