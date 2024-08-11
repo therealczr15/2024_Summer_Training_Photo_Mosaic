@@ -25,7 +25,7 @@ int main(int argc, char *argv[]){
     cout << "fuck cpc's ass\n";
 
     // more ...
-    cout << "hello world" << endl;
+    cout << "hello world!" << endl;
 
     return 0;
 }
