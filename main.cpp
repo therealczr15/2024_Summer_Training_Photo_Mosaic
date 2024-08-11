@@ -21,6 +21,7 @@ int main(int argc, char *argv[]){
     // some bit field filter design driven code here
 
     // some photo mosaic driven code here
+    cout << "fuck cpc\n";
 
     // more ...
     return 0;
