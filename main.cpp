@@ -4,6 +4,10 @@
 #include "photo_mosaic.h"
 #include "bit_field_filter.h"
 
+void Foo(){
+    cout << "Don't fuck me" << endl;
+}
+
 int main(int argc, char *argv[]){
     Image *img1 = new GrayImage();
     img1->LoadImage("Image-Folder/mnist/img_100.jpg");
@@ -25,6 +29,8 @@ int main(int argc, char *argv[]){
     cout << "fuck cpc's ass\n";
 
     // more ...
+    Foo();
+
     cout << "hello world!" << endl;
     cout << "It's Mygo!!" << endl;
 
