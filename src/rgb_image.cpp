@@ -16,6 +16,7 @@ RGBImage::RGBImage(int w, int h, int*** p) : Image(w, h)
 // ===== Destructor =====
 RGBImage::~RGBImage()
 {
+    //cout << "Delete RGBImage successfully!" << endl;
     for(int i = 0; i < _h; i++)
         for(int j = 0; j < _w; j++)
             delete[] pixel[i][j];
@@ -156,27 +157,48 @@ void RGBImage::Flip()
         for(int j = 0; j < _w; j++)
             for(int k = 0; k < 3; k++)
                 pixel[i][j][k] = tmpPixel[i][_w - 1 - j][k];
+
+    // Free memory for tmpPixel
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            delete[] tmpPixel[i][j];
+    for(int i = 0; i < _h; i++)
+        delete[] tmpPixel[i];
+    delete[] tmpPixel;
 }
 
 // ===== Brightness Adjustment =====
 void RGBImage::GammaCorrection(double gamma)
 {
     // Allocate Y, Cr & Cb's memory
-    int** Y  = new int* [_h];
-    int** Cr = new int* [_h];
-    int** Cb = new int* [_h];
-    for(int i = 0; i < _h; i++)
-    {
-        Y[i]  = new int[_w];
-        Cr[i] = new int[_w];
-        Cb[i] = new int[_w];
-    }
+    //int** Y  = new int* [_h];
+    //int** Cr = new int* [_h];
+    //int** Cb = new int* [_h];
+    //for(int i = 0; i < _h; i++)
+    //{
+    //    Y[i]  = new int[_w];
+    //    Cr[i] = new int[_w];
+    //    Cb[i] = new int[_w];
+    //}
+    int** Y; 
+    int** Cr;
+    int** Cb;
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     for(int i = 0; i < _h; i++)
         for(int j = 0; j < _w; j++)
-            Y[i][j] = pow(Y[i][j] /255.0, gamma) * 255;
+            Y[i][j] = pow(Y[i][j] / 255.0, gamma) * 255;
 
     YCrCb2RGB(Y, Cr, Cb);
+
+    // Free Y, Cr & Cb's memory
+    for(int i = 0; i < _h; i++){
+        delete[] Y[i];
+        delete[] Cr[i];
+        delete[] Cb[i];
+    }
+    delete[] Y;
+    delete[] Cr;
+    delete[] Cb;
 }
