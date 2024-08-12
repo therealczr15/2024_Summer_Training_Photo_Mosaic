@@ -1,13 +1,27 @@
-#ifndef _GRAY_IMAGE_H_
-#define _GRAY_IMAGE_H_
+# ifndef _GRAY_IMAGE_H_
+# define _GRAY_IMAGE_H_
 
-#include "image.h"
+# include "image.h"
 
-class GrayImage : public Image{
-private:
+class GrayImage : public Image
+{
+    private:
+        int** pixel;
 
-public:
+    public:
+        // constructor
+        GrayImage();
+        GrayImage(int w, int h, int** p);
 
+        // destructor
+        ~GrayImage();
+
+        // member function
+        bool LoadImage(string filename);
+        void DumpImage(string filename);
+        void Display_X_Server();
+        void Display_ASCII();
+        void Display_CMD();
 };
 
 #endif
