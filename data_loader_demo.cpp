@@ -1,7 +1,8 @@
 #include "data_loader.h"
 #include <vector>
 
-int main(){
+int main()
+{
     Data_Loader data_loader;
     
     // 1. Load gray image
