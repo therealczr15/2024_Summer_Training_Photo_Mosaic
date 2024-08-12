@@ -4,6 +4,7 @@
 # include "data_loader.h"
 # include <iostream>
 # include <string>
+# include <cmath>
 
 using namespace std;
 
@@ -15,21 +16,28 @@ class Image
         static Data_Loader dl;
 
     public:
-        // constructor
+        // Constructor
         Image();
         Image(int w, int h);
 
-        // destructor
+        // Destructor
         ~Image();
 
-        // pure virtual fucntion
+        // Pure Virtual Fucntion
+        // Display Function
         virtual bool LoadImage(string filename) = 0;
         virtual void DumpImage(string filename) = 0;
         virtual void Display_X_Server() = 0;
         virtual void Display_ASCII() = 0;
         virtual void Display_CMD() = 0;
 
-        // member function
+        // Flip
+        virtual void Flip() = 0;
+
+        // Brightness Adjustment
+        virtual void GammaCorrection(double gamma) = 0;
+
+        // Member Function
         int get_width();
         int get_height();
 };
