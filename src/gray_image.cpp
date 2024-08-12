@@ -22,7 +22,7 @@ GrayImage::~GrayImage()
     delete[] pixel;
 }
 
-// ===== Public Member Function =====
+// ===== Display Function =====
 bool GrayImage::LoadImage(string filename)
 {
     pixel = dl.Load_Gray(filename, &_w, &_h);
@@ -53,3 +53,29 @@ void GrayImage::Display_CMD()
     dl.Display_Gray_CMD(filename);
 }
 
+// ===== Flip =====
+void GrayImage::Flip()
+{
+    // Allocate memory for tmpPixel
+    int** tmpPixel = new int* [_h];
+    for(int i = 0; i < _h; i++)
+        tmpPixel[i] = new int [_w];
+    
+    // Copy pixel to tmpPixel
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            tmpPixel[i][j] = pixel[i][j];
+    
+    // Flip Horizontally
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j] = tmpPixel[i][_w - 1 - j];
+}
+
+// ===== Brightness Adjustment =====
+void GrayImage::GammaCorrection(double gamma)
+{
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j] = pow(pixel[i][j] /255.0, gamma) * 255;
+}

@@ -9,19 +9,25 @@ class GrayImage : public Image
         int** pixel;
 
     public:
-        // constructor
+        // Constructor
         GrayImage();
         GrayImage(int w, int h, int** p);
 
-        // destructor
+        // Destructor
         ~GrayImage();
 
-        // member function
+        // Display Function
         bool LoadImage(string filename);
         void DumpImage(string filename);
         void Display_X_Server();
         void Display_ASCII();
         void Display_CMD();
+
+        // Flip
+        void Flip();
+
+        // Brightness Adjustment
+        void GammaCorrection(double gamma);
 };
 
 #endif
