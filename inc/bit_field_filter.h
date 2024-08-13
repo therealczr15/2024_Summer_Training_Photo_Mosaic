@@ -42,4 +42,7 @@ void GrayWorld(Image* img);*/
 // Saturation Adjustment
 //void SaturationEnhance(RGBImage* img);
 
+// API
+void interface();
+
 # endif

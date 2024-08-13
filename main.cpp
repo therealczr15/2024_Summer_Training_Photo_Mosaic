@@ -40,5 +40,7 @@ int main(int argc, char *argv[])
     delete img2;
     delete img3;
 
+    interface();
+
     return 0;
 }
