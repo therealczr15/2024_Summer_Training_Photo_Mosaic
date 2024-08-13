@@ -188,17 +188,20 @@ void RGBImage::LaplacianFilter_A()
     vector<vector<double>> LaplacianKernel = {  { 0, -1,  0},
                                                 {-1,  4, -1},
                                                 { 0, -1,  0}}; 
-    Y = conv(Y, LaplacianKernel, 3);
+    int** tmpY;
+    tmpY = conv(Y, LaplacianKernel, 3);
 
-    YCrCb2RGB(Y, Cr, Cb);
+    YCrCb2RGB(tmpY, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -214,17 +217,20 @@ void RGBImage::LaplacianFilter_B()
     vector<vector<double>> LaplacianKernel = {  {-1, -1, -1},
                                                 {-1,  8, -1},
                                                 {-1, -1, -1}}; 
-    Y = conv(Y, LaplacianKernel, 3);
+    int** tmpY;
+    tmpY = conv(Y, LaplacianKernel, 3);
 
-    YCrCb2RGB(Y, Cr, Cb);
+    YCrCb2RGB(tmpY, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -240,17 +246,20 @@ void RGBImage::PrewittFilter_H()
     vector<vector<double>> PrewittKernel = {    {-1, 0, 1},
                                                 {-1, 0, 1},
                                                 {-1, 0, 1}}; 
-    Y = conv(Y, PrewittKernel, 3);
+    int** tmpY;
+    tmpY = conv(Y, PrewittKernel, 3);
 
-    YCrCb2RGB(Y, Cr, Cb);
+    YCrCb2RGB(tmpY, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -266,17 +275,20 @@ void RGBImage::PrewittFilter_V()
     vector<vector<double>> PrewittKernel = {    { 1,  1,  1},
                                                 { 0,  0,  0},
                                                 {-1, -1, -1}}; 
-    Y = conv(Y, PrewittKernel, 3);
+    int** tmpY;
+    tmpY = conv(Y, PrewittKernel, 3);
 
-    YCrCb2RGB(Y, Cr, Cb);
+    YCrCb2RGB(tmpY, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -292,17 +304,20 @@ void RGBImage::SobelFilter_H()
     vector<vector<double>> SobelKernel = {      {1, 0, -1},
                                                 {2, 0, -2},
                                                 {1, 0, -1}}; 
-    Y = conv(Y, SobelKernel, 3);
+    int** tmpY;
+    tmpY = conv(Y, SobelKernel, 3);
 
-    YCrCb2RGB(Y, Cr, Cb);
+    YCrCb2RGB(tmpY, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -318,17 +333,20 @@ void RGBImage::SobelFilter_V()
     vector<vector<double>> SobelKernel = {      { 1,  2,  1},
                                                 { 0,  0,  0},
                                                 {-1, -2, -1}}; 
-    Y = conv(Y, SobelKernel, 3);
+    int** tmpY;
+    tmpY = conv(Y, SobelKernel, 3);
 
-    YCrCb2RGB(Y, Cr, Cb);
+    YCrCb2RGB(tmpY, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -346,18 +364,20 @@ void RGBImage::BoxFilter(int kerSize)
     for(int i = 0; i < kerSize; i++)
         for(int j = 0; j < kerSize; j++)
             BoxKernel[i][j] = 1.0 / (kerSize * kerSize);
-    
-    Y = conv(Y, BoxKernel, kerSize);
+    int** tmpY;
+    tmpY = conv(Y, BoxKernel, kerSize);
 
     YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -398,18 +418,20 @@ void RGBImage::GaussianFilter(int kerSize)
         cout << endl;
     }
 
+    int** tmpY;
+    tmpY = conv(Y, GaussianKernel, kerSize);
 
-    Y = conv(Y, GaussianKernel, kerSize);
-
-    YCrCb2RGB(Y, Cr, Cb);
+    YCrCb2RGB(tmpY, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
     for(int i = 0; i < _h; i++){
         delete[] Y[i];
+        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
+    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }

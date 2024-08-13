@@ -105,40 +105,40 @@ int main(int argc, char *argv[])
 
     Image* img16 = new RGBImage();
     img16 -> LoadImage("Image-Folder/dog.jpg");
-    //img16 -> Display_X_Server();
+    img16 -> Display_X_Server();
     LaplacianFilter_A(img16);
     img16 -> DumpImage("dog_lap_A.jpg");
-    //img16 -> Display_X_Server();
+    img16 -> Display_X_Server();
 
     Image* img17 = new RGBImage();
     img17 -> LoadImage("Image-Folder/dog.jpg");
     LaplacianFilter_B(img17);
     img17 -> DumpImage("dog_lap_B.jpg");
-    //img17 -> Display_X_Server();
+    img17 -> Display_X_Server();
     
     Image* img18 = new RGBImage();
     img18 -> LoadImage("Image-Folder/dog.jpg");
     PrewittFilter_H(img18);
     img18 -> DumpImage("dog_pre_h.jpg");
-    //img18 -> Display_X_Server();
+    img18 -> Display_X_Server();
 
     Image* img19 = new RGBImage();
     img19 -> LoadImage("Image-Folder/dog.jpg");
     PrewittFilter_V(img19);
     img19 -> DumpImage("dog_pre_v.jpg");
-    //img19 -> Display_X_Server();
+    img19 -> Display_X_Server();
 
     Image* img20 = new RGBImage();
     img20 -> LoadImage("Image-Folder/dog.jpg");
     SobelFilter_H(img20);
     img20 -> DumpImage("dog_sob_h.jpg");
-    //img20 -> Display_X_Server();
+    img20 -> Display_X_Server();
 
     Image* img21 = new RGBImage();
     img21 -> LoadImage("Image-Folder/dog.jpg");
     SobelFilter_V(img21);
     img21 -> DumpImage("dog_sob_v.jpg");
-    //img21 -> Display_X_Server();
+    img21 -> Display_X_Server();
     // some bit field filter design driven code here
 
     // some photo mosaic driven code here
