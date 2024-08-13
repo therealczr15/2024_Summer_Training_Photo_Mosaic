@@ -173,7 +173,7 @@ void RGBImage::Quantization(int quan)
     for(int i = 0; i < _h; i++)
         for(int j = 0; j < _w; j++)
             for(int k = 0; k < 3; k++)
-            pixel[i][j][k] = (pixel[i][j][k] >> quan) << quan;
+                pixel[i][j][k] = (pixel[i][j][k] >> quan) << quan;
 }
 
 // ===== Sharpness Enhancement =====
