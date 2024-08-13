@@ -21,7 +21,7 @@ class Image
         Image(int w, int h);
 
         // Destructor
-        ~Image();
+        virtual ~Image();
 
         // Pure Virtual Fucntion
         // Display Function

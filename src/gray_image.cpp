@@ -17,6 +17,7 @@ GrayImage::GrayImage(int w, int h, int** p) : Image(w, h)
 // ===== Destructor =====
 GrayImage::~GrayImage()
 {
+    //cout << "Delete GrayImage successfully!" << endl;
     for(int i = 0; i < _h; i++)
         delete[] pixel[i];
     delete[] pixel;
@@ -70,6 +71,11 @@ void GrayImage::Flip()
     for(int i = 0; i < _h; i++)
         for(int j = 0; j < _w; j++)
             pixel[i][j] = tmpPixel[i][_w - 1 - j];
+
+    // Free memory for tmpPixel
+    for(int i = 0; i < _h; i++)
+        delete[] tmpPixel[i];
+    delete[] tmpPixel;
 }
 
 // ===== Brightness Adjustment =====

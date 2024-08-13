@@ -1,6 +1,6 @@
 # include "image.h"
 # include "gray_image.h"
-#include "inc/bit_field_filter.h"
+# include "inc/bit_field_filter.h"
 # include "rgb_image.h"
 # include "photo_mosaic.h"
 # include "bit_field_filter.h"
@@ -35,7 +35,10 @@ int main(int argc, char *argv[])
 
     // some photo mosaic driven code here
 
-    // more ...
+    // Free memory
+    delete img1;
+    delete img2;
+    delete img3;
 
     return 0;
 }
