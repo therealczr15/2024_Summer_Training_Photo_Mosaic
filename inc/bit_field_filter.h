@@ -16,28 +16,29 @@
 void Flip(Image* img);
 
 // Quantization
-//void Quantization(Image* img, int quan);
+void Quantization(Image* img, int quan);
 
 // Sharpness Enhancement
-/*void LaplacianFilter (Image* img, int kernelSize);
-void Prewitt_X_Filter(Image* img, int kernelSize);
-void Prewitt_Y_Filter(Image* img, int kernelSize);
-void Sobel_X_Filter(Image* img, int kernelSize);
-void Sobel_Y_Filter(Image* img, int kernelSize);*/
+void LaplacianFilter_A(Image* img);
+void LaplacianFilter_B(Image* img);
+void PrewittFilter_H(Image* img);
+void PrewittFilter_V(Image* img);
+void SobelFilter_H(Image* img);
+void SobelFilter_V(Image* img);
 
 // Denoise
-/*void BoxFilter(Image* img, int kernelSize);
+void BoxFilter(Image* img, int kernelSize);
 void GaussianFilter(Image* img, int kernelSize);
-void MedianFilter(Image* img, int kernelSize);*/
+void MedianFilter(Image* img, int kernelSize);
 
 // Brightness Adjustment
-//void StaticEnhance(Image* img, double alpha, double beta);
+void StaticEnhance(Image* img, double alpha, double beta);
 void GammaCorrection(Image* img, double gamma);
-//void HistogramEqualization(Image* img);
+void HistogramEqualization(Image* img);
 
 // Chromatic Adaptation
-/*void MaxRGB(Image* img);
-void GrayWorld(Image* img);*/
+void MaxRGB(Image* img);
+void GrayWorld(Image* img);
 
 // Saturation Adjustment
 //void SaturationEnhance(RGBImage* img);
