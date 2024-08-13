@@ -32,8 +32,30 @@ class RGBImage : public Image
         // Flip
         void Flip();
 
+        // Quantization
+        void Quantization(int quan);
+
+        // Sharpness Enhancement
+        void LaplacianFilter_A();
+        void LaplacianFilter_B();
+        void PrewittFilter_H();
+        void PrewittFilter_V();
+        void SobelFilter_H();
+        void SobelFilter_V();
+
+        // Denoise
+        void BoxFilter(int kerSize);
+        void GaussianFilter(int kerSize);
+        void MedianFilter(int kerSize);
+
         // Brightness Adjustment
+        void StaticEnhance(double alpha, double beta);
         void GammaCorrection(double gamma);
+        void HistogramEqualization();
+
+        // Chromatic Adaptation
+        void MaxRGB();
+        void GrayWorld();
 };
 
 #endif
