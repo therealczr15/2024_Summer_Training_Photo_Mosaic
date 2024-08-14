@@ -29,6 +29,10 @@ class RGBImage : public Image
         void YCrCb2RGB(int** Y, int** Cr, int** Cb);
         //void HSI2RGB(double** H, double** S, double** I);
 
+        // Scaling
+        void Scaling(int newH, int newW);
+        int bilinear(int i, int j, int k, int newH, int newW);
+
         // Flip
         void Flip();
 
@@ -47,6 +51,7 @@ class RGBImage : public Image
         void BoxFilter(int kerSize);
         void GaussianFilter(int kerSize);
         void MedianFilter(int kerSize);
+        void MosaicFilter(int kerSize);
 
         // Brightness Adjustment
         void StaticEnhance(double alpha, double beta);

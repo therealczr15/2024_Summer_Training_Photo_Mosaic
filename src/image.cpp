@@ -71,5 +71,8 @@ int** Image::conv(int** pixel, vector<vector<double>> kernel, int kerSize)
                 ansPixel[i][j] = convSum;
         }
     }
+    for(int i = 0; i < _h; i++)
+        delete[] pixel[i];    
+    delete[] pixel;
     return ansPixel;
 }

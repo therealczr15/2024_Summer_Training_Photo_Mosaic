@@ -23,6 +23,10 @@ class GrayImage : public Image
         void Display_ASCII();
         void Display_CMD();
 
+        // Scaling
+        void Scaling(int newH, int newW);
+        int bilinear(int i, int j, int newH, int newW);
+
         // Flip
         void Flip();
 
@@ -41,6 +45,7 @@ class GrayImage : public Image
         void BoxFilter(int kerSize);
         void GaussianFilter(int kerSize);
         void MedianFilter(int kerSize);
+        void MosaicFilter(int kerSize);
 
         // Brightness Adjustment
         void StaticEnhance(double alpha, double beta);

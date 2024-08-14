@@ -5,12 +5,8 @@
 # include "gray_image.h"
 # include "rgb_image.h"
 
-/*# define Box_Filter                  0b00000001
-# define Median_Filter               0b00000010
-# define Contrast_Streching          0b00000100
-# define Mosiac_Filter               0b00001000
-# define Alpha_Trimmed_Mean_Filter   0b00010000
-# define Sobel_Gradient_Filter       0b00100000*/
+// Scaling
+void Scaling(Image* img, int newH, int newW);
 
 // FLip
 void Flip(Image* img);
@@ -30,6 +26,7 @@ void SobelFilter_V(Image* img);
 void BoxFilter(Image* img, int kernelSize);
 void GaussianFilter(Image* img, int kernelSize);
 void MedianFilter(Image* img, int kernelSize);
+void MosaicFilter(Image* img, int kernelSize);
 
 // Brightness Adjustment
 void StaticEnhance(Image* img, double alpha, double beta);
@@ -45,7 +42,7 @@ void GrayWorld(Image* img);
 
 // API
 void Filter(Image* img);
-void LoadOptions(uint16_t &options, int case_n);
-void RunOptions(Image* img, uint16_t options);
+void LoadOptions(uint32_t &options, int case_n);
+void RunOptions(Image* img, uint32_t options);
 
 # endif

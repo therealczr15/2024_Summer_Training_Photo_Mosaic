@@ -59,31 +59,17 @@ void RGBImage::Display_CMD()
 // ===== Color Space Transformation
 void RGBImage::RGB2YCrCb(int*** Y, int*** Cr, int*** Cb)
 {
-    // Allocate Y, Cr & Cb's memory
-    int** _Y  = new int* [_h];
-    int** _Cr = new int* [_h];
-    int** _Cb = new int* [_h];
-    for(int i = 0; i < _h; i++)
-    {
-        _Y[i]  = new int[_w];
-        _Cr[i] = new int[_w];
-        _Cb[i] = new int[_w];
-    }
-
     // Calculate Y, Cr & Cb
     for(int i = 0; i < _h; i++)
     {
         for(int j = 0; j < _w; j++)
         {
-            _Y [i][j] = pixel[i][j][0] * 0.299 + pixel[i][j][1] * 0.587 + pixel[i][j][2] * 0.114;
-            _Cr[i][j] = (pixel[i][j][0] - _Y[i][j]) * 0.713 + 128.0;
-            _Cb[i][j] = (pixel[i][j][2] - _Y[i][j]) * 0.564 + 128.0;
+            //cout << i << " " << j << endl;
+            (*Y) [i][j] = pixel[i][j][0] * 0.299 + pixel[i][j][1] * 0.587 + pixel[i][j][2] * 0.114;
+            (*Cr)[i][j] = (pixel[i][j][0] - (*Y) [i][j]) * 0.713 + 128.0;
+            (*Cb)[i][j] = (pixel[i][j][2] - (*Y) [i][j]) * 0.564 + 128.0;
         }
     }
-
-    *Y  = _Y;
-    *Cr = _Cr;
-    *Cb = _Cb;
 }
 
 /*void RGBImage::RGB2HSI(double*** H, double*** S, double*** I)
@@ -134,6 +120,95 @@ void RGBImage::YCrCb2RGB(int** Y, int** Cr, int** Cb)
 
 }*/
 
+// ===== Scaling =====
+int RGBImage::bilinear(int i, int j, int k, int newH, int newW)
+{
+    double x, y, xRatio, yRatio;
+
+    // get inverse ratio, - 1.0 to avoid x0, x1, y0 and y1 from exceeding the boundaries
+    xRatio = (_h - 1.0) * 1.0 / (newH - 1.0);
+    yRatio = (_w - 1.0) * 1.0 / (newW - 1.0);
+
+    // get the original position where each new pixel point should be on the original image
+	x = i * xRatio;
+	y = j * yRatio;
+
+    // get 4 nearest pixels of the original position
+	int x0 = floor(x);
+	int x1 = ceil(x);
+	int y0 = floor(y);
+	int y1 = ceil(y);
+
+    // bilinear interpolation
+	double dx0 = x - x0;
+	double dx1 = 1 - dx0;
+	double dy0 = y - y0;
+	double dy1 = 1 - dy0;
+
+    // get image infomation of the 4 nearest pixels
+    int a0 = pixel[x0][y0][k];
+    int a1 = pixel[x0][y1][k];
+    int a2 = pixel[x1][y0][k];
+    int a3 = pixel[x1][y1][k];
+
+    // calculate by bilinear interpolation
+    // first calculate in direction of y
+    double b0 = a0 * dy1 + a1 * dy0;
+    double b1 = a2 * dy1 + a3 * dy0;
+
+    int ans = b0 * dx1 + b1 * dx0;
+
+    return ans;
+}
+
+void RGBImage::Scaling(int newH, int newW)
+{
+
+    int*** newPixel = new int** [newH];
+    for(int i = 0; i < newH; i++)
+    {
+        newPixel[i] = new int* [newW];
+        for(int j = 0; j < newW; j++)
+            newPixel[i][j] = new int[3];
+    }
+
+    for(int i = 0; i < newH; i++)
+        for(int j = 0; j < newW; j++)
+            for(int k = 0; k < 3; k++)
+                newPixel[i][j][k] = bilinear(i, j, k, newH, newW);
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            delete[] pixel[i][j];
+    for(int i = 0; i < _h; i++)
+        delete[] pixel[i];
+    delete[] pixel;
+
+    _h = newH;
+    _w = newW;
+
+    pixel = new int** [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        pixel[i] = new int* [_w];
+        for(int j = 0; j < _w; j++)
+            pixel[i][j] = new int[3];
+    }
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            for(int k = 0; k < 3; k++)
+                pixel[i][j][k] = newPixel[i][j][k];
+    
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            delete[] newPixel[i][j];
+    for(int i = 0; i < _h; i++)
+        delete[] newPixel[i];
+    delete[] newPixel;
+}
+
 // ===== Flip =====
 void RGBImage::Flip()
 {
@@ -179,174 +254,204 @@ void RGBImage::Quantization(int quan)
 // ===== Sharpness Enhancement =====
 void RGBImage::LaplacianFilter_A()
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> LaplacianKernel = {  { 0, -1,  0},
                                                 {-1,  4, -1},
                                                 { 0, -1,  0}}; 
-    int** tmpY;
-    tmpY = conv(Y, LaplacianKernel, 3);
+    Y = conv(Y, LaplacianKernel, 3);
 
-    YCrCb2RGB(tmpY, Cr, Cb);
+    YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
 
 void RGBImage::LaplacianFilter_B()
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> LaplacianKernel = {  {-1, -1, -1},
                                                 {-1,  8, -1},
                                                 {-1, -1, -1}}; 
-    int** tmpY;
-    tmpY = conv(Y, LaplacianKernel, 3);
+    Y = conv(Y, LaplacianKernel, 3);
 
-    YCrCb2RGB(tmpY, Cr, Cb);
+    YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
 
 void RGBImage::PrewittFilter_H()
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> PrewittKernel = {    {-1, 0, 1},
                                                 {-1, 0, 1},
                                                 {-1, 0, 1}}; 
-    int** tmpY;
-    tmpY = conv(Y, PrewittKernel, 3);
+    Y = conv(Y, PrewittKernel, 3);
 
-    YCrCb2RGB(tmpY, Cr, Cb);
+    YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
 
 void RGBImage::PrewittFilter_V()
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> PrewittKernel = {    { 1,  1,  1},
                                                 { 0,  0,  0},
                                                 {-1, -1, -1}}; 
-    int** tmpY;
-    tmpY = conv(Y, PrewittKernel, 3);
+    Y = conv(Y, PrewittKernel, 3);
 
-    YCrCb2RGB(tmpY, Cr, Cb);
+    YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
 
 void RGBImage::SobelFilter_H()
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> SobelKernel = {      {1, 0, -1},
                                                 {2, 0, -2},
                                                 {1, 0, -1}}; 
-    int** tmpY;
-    tmpY = conv(Y, SobelKernel, 3);
+    Y = conv(Y, SobelKernel, 3);
 
-    YCrCb2RGB(tmpY, Cr, Cb);
+    YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
 
 void RGBImage::SobelFilter_V()
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
     
     vector<vector<double>> SobelKernel = {      { 1,  2,  1},
                                                 { 0,  0,  0},
                                                 {-1, -2, -1}}; 
-    int** tmpY;
-    tmpY = conv(Y, SobelKernel, 3);
+    Y = conv(Y, SobelKernel, 3);
 
-    YCrCb2RGB(tmpY, Cr, Cb);
+    YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
@@ -354,9 +459,16 @@ void RGBImage::SobelFilter_V()
 // ===== Denoise =====
 void RGBImage::BoxFilter(int kerSize)
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
@@ -364,29 +476,35 @@ void RGBImage::BoxFilter(int kerSize)
     for(int i = 0; i < kerSize; i++)
         for(int j = 0; j < kerSize; j++)
             BoxKernel[i][j] = 1.0 / (kerSize * kerSize);
-    int** tmpY;
-    tmpY = conv(Y, BoxKernel, kerSize);
+    //int** tmpY;
+    Y = conv(Y, BoxKernel, kerSize);
 
     YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
 
 void RGBImage::GaussianFilter(int kerSize)
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
@@ -418,29 +536,35 @@ void RGBImage::GaussianFilter(int kerSize)
         cout << endl;
     }
 
-    int** tmpY;
-    tmpY = conv(Y, GaussianKernel, kerSize);
+    //int** tmpY;
+    Y = conv(Y, GaussianKernel, kerSize);
 
-    YCrCb2RGB(tmpY, Cr, Cb);
+    YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
-        delete[] tmpY[i];
         delete[] Cr[i];
         delete[] Cb[i];
     }
     delete[] Y;
-    delete[] tmpY;
     delete[] Cr;
     delete[] Cb;
 }
 
 void RGBImage::MedianFilter(int kerSize)
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
@@ -473,7 +597,71 @@ void RGBImage::MedianFilter(int kerSize)
     YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
+        delete[] Y[i];
+        delete[] Cr[i];
+        delete[] Cb[i];
+    }
+    delete[] Y;
+    delete[] Cr;
+    delete[] Cb;
+}
+
+void RGBImage::MosaicFilter(int kerSize)
+{
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
+
+    RGB2YCrCb(&Y, &Cr, &Cb);
+
+    for(int i = 0; i < _h; i += kerSize)
+    {
+        for(int j = 0; j < _w; j += kerSize)
+        {
+            int row, col;
+            int count = 0;
+            double sum = 0;
+            for(int k = 0; k < kerSize; k++)
+            {
+                for(int l = 0; l < kerSize; l++)
+                {
+                    row = i + k;
+                    col = j + l;
+                    if(row >= 0 && col >= 0 && row < _h && col < _w)
+                    {
+                        sum += Y[row][col];
+                        count++;
+                    }
+                }
+            }
+            double ans = sum * 1.0 / count;
+            for(int k = 0; k < kerSize; k++)
+            {
+                for(int l = 0; l < kerSize; l++)
+                {
+                    row = i + k;
+                    col = j + l;
+                    if(row >= 0 && col >= 0 && row < _h && col < _w)
+                        Y[row][col] = ans;
+                }
+            }
+        }
+    }
+
+    YCrCb2RGB(Y, Cr, Cb);
+
+    // Free Y, Cr & Cb's memory
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
         delete[] Cr[i];
         delete[] Cb[i];
@@ -486,9 +674,16 @@ void RGBImage::MedianFilter(int kerSize)
 // ===== Brightness Adjustment =====
 void RGBImage::StaticEnhance(double alpha, double beta)
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
@@ -509,7 +704,8 @@ void RGBImage::StaticEnhance(double alpha, double beta)
     YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
         delete[] Cr[i];
         delete[] Cb[i];
@@ -521,9 +717,16 @@ void RGBImage::StaticEnhance(double alpha, double beta)
 
 void RGBImage::GammaCorrection(double gamma)
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y [i] = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
@@ -534,7 +737,8 @@ void RGBImage::GammaCorrection(double gamma)
     YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
         delete[] Cr[i];
         delete[] Cb[i];
@@ -546,9 +750,16 @@ void RGBImage::GammaCorrection(double gamma)
 
 void RGBImage::HistogramEqualization()
 {
-    int** Y; 
-    int** Cr;
-    int** Cb;
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
@@ -598,7 +809,8 @@ void RGBImage::HistogramEqualization()
     YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
-    for(int i = 0; i < _h; i++){
+    for(int i = 0; i < _h; i++)
+    {
         delete[] Y[i];
         delete[] Cr[i];
         delete[] Cb[i];
@@ -627,8 +839,6 @@ void RGBImage::MaxRGB()
                 maxB = pixel[i][j][2];
         }
     }
-
-    cout << "R: " << maxR << ", G: " << maxG << ", B:  " << maxB << endl;
 
     double ratioR = 255.0 / maxR;
     double ratioG = 255.0 / maxG;

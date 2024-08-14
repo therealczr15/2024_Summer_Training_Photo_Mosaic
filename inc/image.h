@@ -35,6 +35,9 @@ class Image
         virtual void Display_ASCII() = 0;
         virtual void Display_CMD() = 0;
 
+        // Scaling
+        virtual void Scaling(int newH, int newW) = 0;
+
         // Flip
         virtual void Flip() = 0;
 
@@ -53,6 +56,7 @@ class Image
         virtual void BoxFilter(int kerSize) = 0;
         virtual void GaussianFilter(int kerSize) = 0;
         virtual void MedianFilter(int kerSize) = 0;
+        virtual void MosaicFilter(int kerSize) = 0;
 
         // Brightness Adjustment
         virtual void StaticEnhance(double alpha, double beta) = 0;

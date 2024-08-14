@@ -54,6 +54,79 @@ void GrayImage::Display_CMD()
     dl.Display_Gray_CMD(filename);
 }
 
+// ===== Scaling =====
+int GrayImage::bilinear(int i, int j, int newH, int newW)
+{
+    double x, y, xRatio, yRatio;
+
+    // get inverse ratio, - 1.0 to avoid x0, x1, y0 and y1 from exceeding the boundaries
+    xRatio = (_h - 1.0) * 1.0 / (newH - 1.0);
+    yRatio = (_w - 1.0) * 1.0 / (newW - 1.0);
+
+    // get the original position where each new pixel point should be on the original image
+	x = i * xRatio;
+	y = j * yRatio;
+
+    // get 4 nearest pixels of the original position
+	int x0 = floor(x);
+	int x1 = ceil(x);
+	int y0 = floor(y);
+	int y1 = ceil(y);
+
+    // bilinear interpolation
+	double dx0 = x - x0;
+	double dx1 = 1 - dx0;
+	double dy0 = y - y0;
+	double dy1 = 1 - dy0;
+
+    // get image infomation of the 4 nearest pixels
+    int a0 = pixel[x0][y0];
+    int a1 = pixel[x0][y1];
+    int a2 = pixel[x1][y0];
+    int a3 = pixel[x1][y1];
+
+    // calculate by bilinear interpolation
+    // first calculate in direction of y
+    double b0 = a0 * dy1 + a1 * dy0;
+    double b1 = a2 * dy1 + a3 * dy0;
+
+    int ans = b0 * dx1 + b1 * dx0;
+
+    return ans;
+
+}
+
+void GrayImage::Scaling(int newH, int newW)
+{
+    int** newPixel = new int* [newH];
+    for(int i = 0; i < newH; i++)
+        newPixel[i] = new int [newW];
+
+    for(int i = 0; i < newH; i++)
+        for(int j = 0; j < newW; j++)
+            newPixel[i][j] = bilinear(i, j, newH, newW);
+
+    for(int i = 0; i < _h; i++)
+        delete[] pixel[i];    
+    delete[] pixel;
+
+    _h = newH;
+    _w = newW;
+
+    pixel = new int*[_h];
+    for(int i = 0; i < _h; i++)
+        pixel[i] = new int [_w];
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j] = newPixel[i][j];
+    
+
+    for(int i = 0; i < _h; i++)
+        delete[] newPixel[i];    
+    delete[] newPixel;
+}
+
 // ===== Flip =====
 void GrayImage::Flip()
 {
@@ -197,6 +270,43 @@ void GrayImage::MedianFilter(int kerSize)
             else
                 pixel[i][j] = (tmp[tmp.size() / 2] + tmp[tmp.size() / 2 + 1]) / 2;
             tmp.clear();
+        }
+    }
+}
+
+void GrayImage::MosaicFilter(int kerSize)
+{
+    for(int i = 0; i < _h; i += kerSize)
+    {
+        for(int j = 0; j < _w; j += kerSize)
+        {
+            int row, col;
+            int count = 0;
+            double sum = 0;
+            for(int k = 0; k < kerSize; k++)
+            {
+                for(int l = 0; l < kerSize; l++)
+                {
+                    row = i + k;
+                    col = j + l;
+                    if(row >= 0 && col >= 0 && row < _h && col < _w)
+                    {
+                        sum += pixel[row][col];
+                        count++;
+                    }
+                }
+            }
+            double ans = sum * 1.0 / count;
+            for(int k = 0; k < kerSize; k++)
+            {
+                for(int l = 0; l < kerSize; l++)
+                {
+                    row = i + k;
+                    col = j + l;
+                    if(row >= 0 && col >= 0 && row < _h && col < _w)
+                        pixel[row][col] = ans;
+                }
+            }
         }
     }
 }
