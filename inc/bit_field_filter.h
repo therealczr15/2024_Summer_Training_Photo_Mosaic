@@ -43,4 +43,9 @@ void GrayWorld(Image* img);
 // Saturation Adjustment
 //void SaturationEnhance(RGBImage* img);
 
+// API
+void Filter(Image* img);
+void LoadOptions(uint16_t &options, int case_n);
+void RunOptions(Image* img, uint16_t options);
+
 # endif

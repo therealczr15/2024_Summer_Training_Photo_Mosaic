@@ -3,6 +3,8 @@
 
 # include "data_loader.h"
 # include <iostream>
+# include <stdint.h>
+# include <bitset>
 # include <string>
 # include <cmath>
 # include <vector>

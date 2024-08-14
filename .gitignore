@@ -1,5 +1,7 @@
 .nfs*
 *.o
-main
+third-party/*
 .vscode
+main
+Image_Processing
 tmp.jpg
