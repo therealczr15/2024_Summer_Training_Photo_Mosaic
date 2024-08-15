@@ -9,6 +9,7 @@
 # include <cmath>
 # include <vector>
 # include <algorithm>
+# include <float.h>
 
 using namespace std;
 
@@ -51,12 +52,14 @@ class Image
         virtual void PrewittFilter_V() = 0;
         virtual void SobelFilter_H() = 0;
         virtual void SobelFilter_V() = 0;
+        virtual void EmbossFilter() = 0;
 
         // Denoise
         virtual void BoxFilter(int kerSize) = 0;
         virtual void GaussianFilter(int kerSize) = 0;
         virtual void MedianFilter(int kerSize) = 0;
         virtual void MosaicFilter(int kerSize) = 0;
+        virtual void MotionBlur(int kernelSize, double theta) = 0;
 
         // Brightness Adjustment
         virtual void StaticEnhance(double alpha, double beta) = 0;
@@ -66,6 +69,15 @@ class Image
         // Chromatic Adaptation
         virtual void MaxRGB() = 0;
         virtual void GrayWorld() = 0;
+
+        // Saturation Adjustment
+        virtual void SaturationEnhance(double gamma) = 0;
+        
+        // Color Grading
+        virtual void SepiaTone() = 0;
+        virtual void CoolTone() = 0;
+        virtual void WarmTone() = 0;
+        virtual void NegativeFilm() = 0;
 
         // Member Function
         int get_width();

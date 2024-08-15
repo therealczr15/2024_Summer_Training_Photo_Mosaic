@@ -12,6 +12,11 @@ class PhotoMosaic
     private:
         static Data_Loader dl;
         RGBImage tgtImg;
+        vector<string> directoryImg;
+    public:
+        PhotoMosaic(string filename = "Image-Folder/girl_2x.png", string directoryPath = "Image-Folder/cifar10");
+        ~PhotoMosaic();
+        void GetPhotoMosaic(int sub_img_size);
 };
 
 #endif

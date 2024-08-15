@@ -165,9 +165,16 @@ int main(int argc, char *argv[])
     //if(DISPLAY_FLAG) img21 -> Display_X_Server();
 
     //// ===== bit-field filter test =====
-    Image* img = new RGBImage();
+    /*Image* img = new GrayImage();
     img -> LoadImage("Image-Folder/lena.jpg");
-    Filter(img);
+    Filter(img);*/
+    /*Image* img = new RGBImage();
+    img -> LoadImage("Image-Folder/lena.jpg");
+    img -> Display_X_Server();
+    img -> EmbossFilter();
+    img -> Display_X_Server();*/
+    //delete img;
+    
 
     // some bit field filter design driven code here
 
@@ -189,7 +196,10 @@ int main(int argc, char *argv[])
     //delete img19;
     //delete img20;
     //delete img21;
-    delete img;
+    //delete img;
 
+    PhotoMosaic pm("Image-Folder/girl_2x.png", "Image-Folder/cifar10");
+    pm.GetPhotoMosaic(32);
+    
     return 0;
 }

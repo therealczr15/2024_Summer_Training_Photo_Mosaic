@@ -54,6 +54,11 @@ void GrayImage::Display_CMD()
     dl.Display_Gray_CMD(filename);
 }
 
+int** GrayImage::GetPixel()
+{
+    return pixel;
+}
+
 // ===== Scaling =====
 int GrayImage::bilinear(int i, int j, int newH, int newW)
 {
@@ -163,7 +168,7 @@ void GrayImage::Quantization(int quan)
 void GrayImage::LaplacianFilter_A()
 {
     vector<vector<double>> LaplacianKernel = {  { 0, -1,  0},
-                                                {-1,  4, -1},
+                                                {-1,  5, -1},
                                                 { 0, -1,  0}}; 
     pixel = conv(pixel, LaplacianKernel, 3);
 }
@@ -171,7 +176,7 @@ void GrayImage::LaplacianFilter_A()
 void GrayImage::LaplacianFilter_B()
 {
     vector<vector<double>> LaplacianKernel = {  {-1, -1, -1},
-                                                {-1,  8, -1},
+                                                {-1,  9, -1},
                                                 {-1, -1, -1}}; 
     pixel = conv(pixel, LaplacianKernel, 3);
 }
@@ -179,7 +184,7 @@ void GrayImage::LaplacianFilter_B()
 void GrayImage::PrewittFilter_H()
 {
     vector<vector<double>> PrewittKernel = {    {-1, 0, 1},
-                                                {-1, 0, 1},
+                                                {-1, 1, 1},
                                                 {-1, 0, 1}}; 
     pixel = conv(pixel, PrewittKernel, 3);
 }
@@ -187,7 +192,7 @@ void GrayImage::PrewittFilter_H()
 void GrayImage::PrewittFilter_V()
 {
     vector<vector<double>> PrewittKernel = {    { 1,  1,  1},
-                                                { 0,  0,  0},
+                                                { 0,  1,  0},
                                                 {-1, -1, -1}}; 
     pixel = conv(pixel, PrewittKernel, 3);
 }
@@ -195,7 +200,7 @@ void GrayImage::PrewittFilter_V()
 void GrayImage::SobelFilter_H()
 {
     vector<vector<double>> SobelKernel = {      {1, 0, -1},
-                                                {2, 0, -2},
+                                                {2, 1, -2},
                                                 {1, 0, -1}}; 
     pixel = conv(pixel, SobelKernel, 3);
 }
@@ -203,9 +208,20 @@ void GrayImage::SobelFilter_H()
 void GrayImage::SobelFilter_V()
 {
     vector<vector<double>> SobelKernel = {      { 1,  2,  1},
-                                                { 0,  0,  0},
+                                                { 0,  1,  0},
                                                 {-1, -2, -1}}; 
     pixel = conv(pixel, SobelKernel, 3);
+}
+
+void GrayImage::EmbossFilter()
+{
+    vector<vector<double>> EmbossKernel = {     {-2, -1,  0},
+                                                {-1,  1,  1},
+                                                { 0,  1,  2}}; 
+    pixel = conv(pixel, EmbossKernel, 3);
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j] = min(255, max(0, static_cast<int>(pixel[i][j] + 128)));
 }
 
 // ===== Denoise =====
@@ -311,23 +327,45 @@ void GrayImage::MosaicFilter(int kerSize)
     }
 }
 
+void GrayImage::MotionBlur(int kerSize, double theta)
+{
+
+    vector<vector<double>> kernel(kerSize, vector<double>(kerSize));
+    double rad = theta * M_PI / 180.0;
+    int center = kerSize / 2;
+
+    // Populate the kernel
+    for (int i = 0; i < kerSize; i++) 
+    {
+        int x = i - center;
+        int y = static_cast<int>(round(x * tan(rad)));
+        int row = center + y;
+        int col = i;
+        if (row >= 0 && row < kerSize)
+            kernel[row][col] = 1.0;
+    }
+
+    // Normalize the kernel so that the sum of all elements is 1
+    double sum = 0;
+    for (int i = 0; i < kerSize; i++)
+        for (int j = 0; j < kerSize; j++)
+            sum += kernel[i][j];
+    
+    if (sum != 0) 
+        for (int i = 0; i < kerSize; i++)
+            for (int j = 0; j < kerSize; j++)
+                kernel[i][j] /= sum;
+
+    pixel = conv(pixel, kernel, kerSize);
+}
+
 // ===== Brightness Adjustment =====
 void GrayImage::StaticEnhance(double alpha, double beta)
 {
-    double tmp;
-    for(int i = 0; i < _h; i++)
-    {   
+    for(int i = 0; i < _h; i++)   
         for(int j = 0; j < _w; j++)
-        {
-            tmp = pixel[i][j] * alpha + beta;
-            if(tmp >= 255.0)
-                pixel[i][j] = 255;
-            else if(tmp <= 0)
-                pixel[i][j] = 0;
-            else
-                pixel[i][j] = tmp;
-        }
-    }
+            pixel[i][j] = min(255, max(0, static_cast<int>(pixel[i][j] * alpha + beta)));
+
 }
 
 
@@ -368,55 +406,62 @@ void GrayImage::HistogramEqualization()
     }
 
     // Get Histogram Equalization Result
-    double result;
     for(int i = 0; i < _h; i++)
-    {
         for(int j = 0; j < _w; j++)
-        {
-            result = 255 * cdf[pixel[i][j]];
-            if(result >= 255)
-                pixel[i][j] = 255;
-            else if(result <= 0)
-                pixel[i][j] = 0;
-            else
-                pixel[i][j] = result;
-        }
-    }
+            pixel[i][j] = min(255, max(0, static_cast<int>(255 * cdf[pixel[i][j]])));
+
 }
 
 // ===== Chromatic Adaptation =====
 void GrayImage::MaxRGB()
 {
-    int max = 0;
+    int maxPixel = 0;
 
     for(int i = 0; i < _h; i++)
     {
         for(int j = 0; j < _w; j++)
         {
-            if(pixel[i][j] > max)
-                max = pixel[i][j];
+            if(pixel[i][j] > maxPixel)
+                maxPixel = pixel[i][j];
         }
     }
 
-    double ratio = 255.0 / max;
-
-    double result;
+    double ratio = 255.0 / maxPixel;
     for(int i = 0; i < _h; i++)
-    {
         for(int j = 0; j < _w; j++)
-        {
-            result = pixel[i][j] * ratio;
-            if(result >= 255)
-                pixel[i][j] = 255;
-            else if(result <= 0)
-                pixel[i][j] = 0;
-            else
-                pixel[i][j] = result;
-        }
-    }
+            pixel[i][j] = min(255, max(0, static_cast<int>(pixel[i][j] * ratio)));
 }
 
 void GrayImage::GrayWorld()
 {
-    cout << "ERROR: GrayWorld can't be applied in GrayImage.";
+    cout << "ERROR: Gray World can't be applied in GrayImage.";
+}
+ 
+// ====== Saturation Adjustment =====
+void GrayImage::SaturationEnhance(double gamma)
+{
+    cout << "ERROR: Saturation Enhance can't be applied in GrayImage.";
+}
+
+// ===== Color Grading =====
+void GrayImage::SepiaTone()
+{
+    cout << "ERROR: Sepia Tone can't be applied in GrayImage.";
+}
+
+void GrayImage::CoolTone()
+{
+    cout << "ERROR: Cool Tone can't be applied in GrayImage.";
+}
+
+void GrayImage::WarmTone()
+{
+    cout << "ERROR: Warm Tone can't be applied in GrayImage.";
+}
+
+void GrayImage::NegativeFilm()
+{
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j] = 255 - pixel[i][j];
 }

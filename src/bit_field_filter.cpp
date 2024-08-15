@@ -6,20 +6,27 @@
 # define CASE_GAMMACORRECTION       0b00000000000000000000000000001000
 # define CASE_STATICENHANCE         0b00000000000000000000000000010000
 # define CASE_HISTOGRAMEQUALIZATION 0b00000000000000000000000000100000
-# define CASE_MAXRGB                0b00000000000000000000000001000000
-# define CASE_GRAYWORLD             0b00000000000000000000000010000000
-# define CASE_BOXFILTER             0b00000000000000000000000100000000
-# define CASE_GAUSSIANFILTER        0b00000000000000000000001000000000
-# define CASE_MEDIANFILTER          0b00000000000000000000010000000000
-# define CASE_MOSAICFILTER          0b00000000000000000000100000000000
-# define CASE_LAPLACIANFILTER_A     0b00000000000000000001000000000000
-# define CASE_LAPLACIANFILTER_B     0b00000000000000000010000000000000
-# define CASE_PREWITTFILTER_H       0b00000000000000000100000000000000
-# define CASE_PREWITTFILTER_V       0b00000000000000001000000000000000
-# define CASE_SOBELFILTER_H         0b00000000000000010000000000000000
-# define CASE_SOBELFILTER_V         0b00000000000000100000000000000000
+# define CASE_SEPIATONE             0b00000000000000000000000001000000    
+# define CASE_COOLTONE              0b00000000000000000000000010000000
+# define CASE_WARMTONE              0b00000000000000000000000100000000
+# define CASE_NEGATIVEFILM          0b00000000000000000000001000000000    
+# define CASE_MAXRGB                0b00000000000000000000010000000000      
+# define CASE_GRAYWORLD             0b00000000000000000000100000000000     
+# define CASE_SATURATIONENHANCE     0b00000000000000000001000000000000 
+# define CASE_BOXFILTER             0b00000000000000000010000000000000
+# define CASE_GAUSSIANFILTER        0b00000000000000000100000000000000
+# define CASE_MEDIANFILTER          0b00000000000000001000000000000000
+# define CASE_MOSAICFILTER          0b00000000000000010000000000000000
+# define CASE_MOTIONBLUR            0b00000000000000100000000000000000
+# define CASE_LAPLACIANFILTER_A     0b00000000000001000000000000000000
+# define CASE_LAPLACIANFILTER_B     0b00000000000010000000000000000000
+# define CASE_PREWITTFILTER_H       0b00000000000100000000000000000000
+# define CASE_PREWITTFILTER_V       0b00000000001000000000000000000000
+# define CASE_SOBELFILTER_H         0b00000000010000000000000000000000
+# define CASE_SOBELFILTER_V         0b00000000100000000000000000000000
+# define CASE_EMBOSSFILTER          0b00000001000000000000000000000000
 
-# define CSE_NUM 18
+# define CSE_NUM 25
 
 // *** true:  Display Image On Xserver ***
 // *** false: Check Memory Leak ***
@@ -76,6 +83,11 @@ void SobelFilter_V(Image* img)
     img -> SobelFilter_V();
 }
 
+void EmbossFilter(Image *img)
+{
+    img -> EmbossFilter();
+}
+
 // ===== Denoise =====
 void BoxFilter(Image* img, int kernelSize)
 {
@@ -95,6 +107,11 @@ void MedianFilter(Image* img, int kernelSize)
 void MosaicFilter(Image* img, int kernelSize)
 {
     img -> MosaicFilter(kernelSize);
+}
+
+void MotionBlur(Image* img, int kernelSize, double theta)
+{
+    img -> MotionBlur(kernelSize, theta);
 }
 
 // ===== Brightness Adjustment =====
@@ -124,6 +141,33 @@ void GrayWorld(Image* img)
     img -> GrayWorld();
 }
 
+// ===== Saturation Adjustment =====
+void SaturationEnhance(Image* img, double gamma)
+{
+    img -> SaturationEnhance(gamma);
+}
+
+// ===== Color Grading =====
+void SepiaTone(Image* img)
+{
+    img -> SepiaTone();
+}
+
+void CoolTone(Image* img)
+{
+    img -> CoolTone();
+}
+
+void WarmTone(Image* img)
+{
+    img -> WarmTone();
+}
+
+void NegativeFilm(Image* img)
+{
+    img -> NegativeFilm();
+}
+
 // ===== Filter Interface =====
 void Filter(Image* img)
 {
@@ -146,20 +190,27 @@ void Filter(Image* img)
     cout << "       |    4.   Gamma Correction                             |" << endl;
     cout << "       |    5.   Brightness Enhancement                       |" << endl;
     cout << "       |    6.   Histogram Equalization                       |" << endl;
-    cout << "       |    7.   Max RGB                                      |" << endl;
-    cout << "       |    8.   Gray World                                   |" << endl;
-    cout << "       |    9.   Box Filter                                   |" << endl;
-    cout << "       |   10.   Gaussian Filter                              |" << endl;
-    cout << "       |   11.   Median Filter                                |" << endl;
-    cout << "       |   12.   Mosaic Filter                                |" << endl;
-    cout << "       |   13.   Laplacian Filter A                           |" << endl;
-    cout << "       |   14.   Laplacian Filter B                           |" << endl;
-    cout << "       |   15.   Prewitt Filter Horizontal                    |" << endl;
-    cout << "       |   16.   Prewitt Filter Vertical                      |" << endl;
-    cout << "       |   17.   Sobel Filter Horizontal                      |" << endl;
-    cout << "       |   18.   Sobel Filter Verical                         |" << endl;
+    cout << "       |    7.   Sepia Tone                                   |" << endl;
+    cout << "       |    8.   Cool Tone                                    |" << endl;
+    cout << "       |    9.   Warm Tone                                    |" << endl;
+    cout << "       |   10.   Negative Film                                |" << endl;
+    cout << "       |   11.   Max RGB                                      |" << endl;
+    cout << "       |   12.   Gray World                                   |" << endl;
+    cout << "       |   13.   Saturation Enhance                           |" << endl;
+    cout << "       |   14.   Box Filter                                   |" << endl;
+    cout << "       |   15.   Gaussian Filter                              |" << endl;
+    cout << "       |   16.   Median Filter                                |" << endl;
+    cout << "       |   17.   Mosaic Filter                                |" << endl;
+    cout << "       |   18.   Motion Blur                                  |" << endl;
+    cout << "       |   19.   Laplacian Filter A                           |" << endl;
+    cout << "       |   20.   Laplacian Filter B                           |" << endl;
+    cout << "       |   21.   Prewitt Filter Horizontal                    |" << endl;
+    cout << "       |   22.   Prewitt Filter Vertical                      |" << endl;
+    cout << "       |   23.   Sobel Filter Horizontal                      |" << endl;
+    cout << "       |   24.   Sobel Filter Verical                         |" << endl;
+    cout << "       |   25.   Emboss Filter                                |" << endl;
     cout << "       ========================================================" << endl;
-
+    
     cout << endl;
 
     // Input option
@@ -235,42 +286,62 @@ void LoadOptions(uint32_t &options, int case_n)
             options = options | CASE_HISTOGRAMEQUALIZATION;
             break;
         case 7:
-            options = options | CASE_MAXRGB;
+            options = options | CASE_SEPIATONE;
             break;
         case 8:
-            options = options | CASE_GRAYWORLD;
+            options = options | CASE_COOLTONE;
             break;
         case 9:
-            options = options | CASE_BOXFILTER;
+            options = options | CASE_WARMTONE;
             break;
         case 10:
-            options = options | CASE_GAUSSIANFILTER;
-            break;  
+            options = options | CASE_NEGATIVEFILM;
+            break;
         case 11:
-            options = options | CASE_MEDIANFILTER;
+            options = options | CASE_MAXRGB;
             break;
         case 12:
-            options = options | CASE_MOSAICFILTER;
+            options = options | CASE_GRAYWORLD;
             break;
         case 13:
-            options = options | CASE_LAPLACIANFILTER_A;
+            options = options | CASE_GRAYWORLD;
             break;
         case 14:
-            options = options | CASE_LAPLACIANFILTER_B;
+            options = options | CASE_SATURATIONENHANCE;
             break;
         case 15:
-            options = options | CASE_PREWITTFILTER_H;
-            break; 
+            options = options | CASE_GAUSSIANFILTER;
+            break;  
         case 16:
-            options = options | CASE_PREWITTFILTER_V;
+            options = options | CASE_MEDIANFILTER;
             break;
         case 17:
+            options = options | CASE_MOSAICFILTER;
+            break;
+        case 18:
+            options = options | CASE_MOTIONBLUR;
+            break;
+        case 19:
+            options = options | CASE_LAPLACIANFILTER_A;
+            break;
+        case 20:
+            options = options | CASE_LAPLACIANFILTER_B;
+            break;
+        case 21:
+            options = options | CASE_PREWITTFILTER_H;
+            break; 
+        case 22:
+            options = options | CASE_PREWITTFILTER_V;
+            break;
+        case 23:
             options = options | CASE_SOBELFILTER_H;
             break; 
-        case 18:
+        case 24:
             options = options | CASE_SOBELFILTER_V;
             break; 
-        
+        case 25:
+            options = options | CASE_EMBOSSFILTER;
+            break;         
         default:
             cout << "       Case " << case_n << "is an invalid input!" << endl;
             exit(1);  
@@ -416,6 +487,82 @@ void RunOptions(Image* img, uint32_t options)
         cout << endl << endl;
     }
 
+    // ===== SepiaTone =====
+    if(options & CASE_SEPIATONE)
+    {
+        cout << "       ========================================================" << endl;
+        cout << "       |                      Sepia Tone                      |" << endl;
+        cout << "       ========================================================" << endl;
+        cout << endl;
+        SepiaTone(img);
+
+        if(DISPLAY_FLAG)
+        {
+            cout << "       Do you want to see the result (y/n)? ";
+            cin >> tmp_c;
+            if(tmp_c == 'y' || tmp_c == 'Y') img -> Display_X_Server();
+        }
+
+        cout << endl << endl;
+    }
+
+    // ===== CoolTone =====
+    if(options & CASE_COOLTONE)
+    {
+        cout << "       ========================================================" << endl;
+        cout << "       |                      Cool Tone                       |" << endl;
+        cout << "       ========================================================" << endl;
+        cout << endl;
+        CoolTone(img);
+
+        if(DISPLAY_FLAG)
+        {
+            cout << "       Do you want to see the result (y/n)? ";
+            cin >> tmp_c;
+            if(tmp_c == 'y' || tmp_c == 'Y') img -> Display_X_Server();
+        }
+
+        cout << endl << endl;
+    }
+
+    // ===== WarmTone =====
+    if(options & CASE_WARMTONE)
+    {
+        cout << "       ========================================================" << endl;
+        cout << "       |                      Warm Tone                       |" << endl;
+        cout << "       ========================================================" << endl;
+        cout << endl;
+        WarmTone(img);
+
+        if(DISPLAY_FLAG)
+        {
+            cout << "       Do you want to see the result (y/n)? ";
+            cin >> tmp_c;
+            if(tmp_c == 'y' || tmp_c == 'Y') img -> Display_X_Server();
+        }
+
+        cout << endl << endl;
+    }
+
+    // ===== Negative Film =====
+    if(options & CASE_NEGATIVEFILM)
+    {
+        cout << "       ========================================================" << endl;
+        cout << "       |                    Negative Film                     |" << endl;
+        cout << "       ========================================================" << endl;
+        cout << endl;
+        NegativeFilm(img);
+
+        if(DISPLAY_FLAG)
+        {
+            cout << "       Do you want to see the result (y/n)? ";
+            cin >> tmp_c;
+            if(tmp_c == 'y' || tmp_c == 'Y') img -> Display_X_Server();
+        }
+
+        cout << endl << endl;
+    }
+
     // ===== MaxRGB =====
     if(options & CASE_MAXRGB)
     {
@@ -443,6 +590,27 @@ void RunOptions(Image* img, uint32_t options)
         cout << "       ========================================================" << endl;
         cout << endl;
         GrayWorld(img);
+
+        if(DISPLAY_FLAG)
+        {
+            cout << "       Do you want to see the result (y/n)? ";
+            cin >> tmp_c;
+            if(tmp_c == 'y' || tmp_c == 'Y') img -> Display_X_Server();
+        }
+
+        cout << endl << endl;
+    }
+
+    // ===== Saturation Enhance =====
+    if(options & CASE_SATURATIONENHANCE)
+    {
+        cout << "       ========================================================" << endl;
+        cout << "       |                  Saturation Enhance                  |" << endl;
+        cout << "       ========================================================" << endl;
+        cout << endl;
+        cout << "       Please input gamma (0 ~ 1 to enhance saturation, > 1 to reduce saturation): ";
+        cin >> tmp_dbl1;
+        SaturationEnhance(img, tmp_dbl1);
 
         if(DISPLAY_FLAG)
         {
@@ -484,7 +652,7 @@ void RunOptions(Image* img, uint32_t options)
         cout << endl;
         cout << "       Please input kernal size: ";
         cin >> tmp_int;
-        BoxFilter(img, tmp_int);
+        GaussianFilter(img, tmp_int);
 
         if(DISPLAY_FLAG)
         {
@@ -528,6 +696,28 @@ void RunOptions(Image* img, uint32_t options)
         cout << "       Please input kernal size: ";
         cin >> tmp_int;
         MosaicFilter(img, tmp_int);
+
+        if(DISPLAY_FLAG)
+        {
+            cout << "       Do you want to see the result (y/n)? ";
+            cin >> tmp_c;
+            if(tmp_c == 'y' || tmp_c == 'Y') img -> Display_X_Server();
+        }
+
+        cout << endl << endl;
+    }
+
+    // ===== Motion Blur
+    if(options & CASE_MOTIONBLUR)
+    {
+        cout << "       ========================================================" << endl;
+        cout << "       |                     Motion Blur                      |" << endl;
+        cout << "       ========================================================" << endl;
+        cout << endl;
+        
+        cout << "       Please input kernal size, theta: ";
+        cin >> tmp_int >> tmp_dbl1;
+        MotionBlur(img, tmp_int, tmp_dbl1);
 
         if(DISPLAY_FLAG)
         {
@@ -648,6 +838,26 @@ void RunOptions(Image* img, uint32_t options)
         cout << endl;
 
         SobelFilter_V(img);
+
+        if(DISPLAY_FLAG)
+        {
+            cout << "       Do you want to see the result (y/n)? ";
+            cin >> tmp_c;
+            if(tmp_c == 'y' || tmp_c == 'Y') img -> Display_X_Server();
+        }
+
+        cout << endl << endl;
+    }
+
+     // ===== Emboss Filter =====
+    if(options & CASE_EMBOSSFILTER)
+    {
+        cout << "       ========================================================" << endl;
+        cout << "       |                    Emboss Filter                     |" << endl;
+        cout << "       ========================================================" << endl;
+        cout << endl;
+
+        EmbossFilter(img);
 
         if(DISPLAY_FLAG)
         {

@@ -5,10 +5,9 @@
 
 class GrayImage : public Image
 {
-    private:
+    public:
         int** pixel;
 
-    public:
         // Constructor
         GrayImage();
         GrayImage(int w, int h, int** p);
@@ -22,6 +21,7 @@ class GrayImage : public Image
         void Display_X_Server();
         void Display_ASCII();
         void Display_CMD();
+        int** GetPixel();
 
         // Scaling
         void Scaling(int newH, int newW);
@@ -40,12 +40,14 @@ class GrayImage : public Image
         void PrewittFilter_V();
         void SobelFilter_H();
         void SobelFilter_V();
+        void EmbossFilter();
         
         // Denoise
         void BoxFilter(int kerSize);
         void GaussianFilter(int kerSize);
         void MedianFilter(int kerSize);
         void MosaicFilter(int kerSize);
+        void MotionBlur(int kerSize, double theta);
 
         // Brightness Adjustment
         void StaticEnhance(double alpha, double beta);
@@ -55,6 +57,15 @@ class GrayImage : public Image
         // Chromatic Adaptation
         void MaxRGB();
         void GrayWorld();
+
+        // Saturation Adjustment 
+        void SaturationEnhance(double gamma);
+
+        // Color Grading
+        void SepiaTone();
+        void CoolTone();
+        void WarmTone();
+        void NegativeFilm();
 };
 
 #endif
