@@ -1,1 +1,5 @@
-obj/photo_mosaic.o: src/photo_mosaic.cpp
+obj/photo_mosaic.o: src/photo_mosaic.cpp inc/photo_mosaic.h inc/image.h \
+ Data-Loader/data_loader.h third-party/CImg/CImg.h \
+ third-party/libjpeg/jpeglib.h third-party/libjpeg/jconfig.h \
+ third-party/libjpeg/jmorecfg.h inc/gray_image.h inc/rgb_image.h \
+ inc/bit_field_filter.h

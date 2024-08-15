@@ -165,13 +165,18 @@ int main(int argc, char *argv[])
     //if(DISPLAY_FLAG) img21 -> Display_X_Server();
 
     //// ===== bit-field filter test =====
-    Image* img = new RGBImage();
-    img -> LoadImage("Image-Folder/lena.jpg");
-    Filter(img);
+    //Image* img = new RGBImage();
+    //img -> LoadImage("Image-Folder/lena.jpg");
+    //img -> DumpImage("./result/test1.jpg");
 
     // some bit field filter design driven code here
+    //Filter(img);
+    //img -> DumpImage("./result/test2.jpg");
 
     // some photo mosaic driven code here
+    PhotoMosaic* pm = new PhotoMosaic();
+    Image* ans = new RGBImage();
+    ans = pm -> Execute("Image-Folder/lena.jpg", "Image-Folder/cifar10");
 
     // Free memory
     //delete img1;
@@ -189,7 +194,11 @@ int main(int argc, char *argv[])
     //delete img19;
     //delete img20;
     //delete img21;
-    delete img;
+
+    //delete img;
+
+    delete pm;
+    delete ans;
 
     return 0;
 }

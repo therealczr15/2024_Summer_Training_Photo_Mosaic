@@ -127,7 +127,11 @@ void Data_Loader::Dump_Gray(int w, int h, int **pixels, string filename){
             img(x, y) = (unsigned char)pixels[y][x];
         }
     }
+    // Save the image to a file
     img.save(filename.c_str());
+    //string str = "./result/";
+    //str = str + filename;
+    //img.save(str.c_str());
 
 }
 
@@ -148,6 +152,10 @@ void Data_Loader::Dump_RGB(int w, int h, int ***pixels, string filename){
 
     // Save the image to a file
     img.save(filename.c_str());
+    //string str = "./result/";
+    //str = str + filename;
+    //img.save(str.c_str());
+
 }
 
 void Data_Loader::Display_Gray_X_Server(int w, int h, int **pixels){

@@ -5,7 +5,9 @@
 
 class RGBImage : public Image
 {
-    private:
+    //private:
+    //    int*** pixel;
+    public:
         int*** pixel;
 
     public:
@@ -61,6 +63,12 @@ class RGBImage : public Image
         // Chromatic Adaptation
         void MaxRGB();
         void GrayWorld();
+
+        // Photo Mosaic
+        void CalSrcAvg(vector<int>& srcAvgR, vector<int>& srcAvgG, vector<int>& srcAvgB);
+        void AllocateAns(int newH, int newW);
+        int*** GetPixel();
+        void SetSrc2Trg(int*** srcPixel, int i_pic, int j_pic);
 };
 
 #endif

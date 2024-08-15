@@ -659,3 +659,4 @@ void RunOptions(Image* img, uint32_t options)
         cout << endl << endl;
     }
 }
+

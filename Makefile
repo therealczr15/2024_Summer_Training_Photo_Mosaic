@@ -70,3 +70,7 @@ check:
 
 clean:
 	rm -rf $(OBJDIR) $(TARGET)
+	rm -rf ./*.jpg
+	rm -rf ./*.png
+	rm -rf ./result/*.jpg
+	rm -rf ./result/*.png

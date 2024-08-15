@@ -67,6 +67,12 @@ class Image
         virtual void MaxRGB() = 0;
         virtual void GrayWorld() = 0;
 
+        // Photo Mosaic
+        virtual void CalSrcAvg(vector<int>& srcAvgR, vector<int>& srcAvgG, vector<int>& srcAvgB);
+        virtual void AllocateAns(int newH, int newW);
+        virtual int*** GetPixel();
+        virtual void SetSrc2Trg(int*** srcPixel, int i_pic, int j_pic);
+
         // Member Function
         int get_width();
         int get_height();

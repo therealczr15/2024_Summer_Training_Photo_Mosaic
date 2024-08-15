@@ -2,6 +2,11 @@
  
 using namespace std;
 
+# define SUB_PIC_SIZE   32      // size of src image
+# define SUB_PIC_NUM    32      // number of src image at one side of target image
+
+# define SRC_TOTAL_NUM  10      // total number of src image
+
 // ===== Constructor =====
 RGBImage::RGBImage(): Image(0, 0)
 {
@@ -930,6 +935,46 @@ void RGBImage::GrayWorld()
                 pixel[i][j][2] = 0;
             else
                 pixel[i][j][2] = resultB;
+        }
+    }
+}
+
+void RGBImage::CalSrcAvg(vector<int>& srcAvgR, vector<int>& srcAvgG, vector<int>& srcAvgB){
+    double tmpR, tmpG, tmpB;
+
+    tmpR = tmpG = tmpB = 0;
+    for(int row = 0; row < SUB_PIC_SIZE; row++){
+        for(int col = 0; col < SUB_PIC_SIZE; col++){
+            tmpR += pixel[row][col][0];
+            tmpG += pixel[row][col][1];
+            tmpB += pixel[row][col][2];
+        }
+    }
+
+    srcAvgR.push_back(tmpR / (SUB_PIC_SIZE * SUB_PIC_SIZE));
+    srcAvgG.push_back(tmpG / (SUB_PIC_SIZE * SUB_PIC_SIZE));
+    srcAvgB.push_back(tmpB / (SUB_PIC_SIZE * SUB_PIC_SIZE));
+}
+
+void RGBImage::AllocateAns(int newH, int newW){
+    pixel = new int**[newH];
+    for(int i = 0; i < newH; i++){
+        pixel[i] = new int*[newW];
+        for(int j = 0; j < newW; j++)
+            pixel[i][j] = new int[3];
+    }
+}
+
+int*** RGBImage::GetPixel(){
+    return pixel;
+}
+
+void RGBImage::SetSrc2Trg(int*** srcPixel, int i_pic, int j_pic){
+    for(int row = i_pic*SUB_PIC_SIZE; row < (i_pic + 1)*SUB_PIC_SIZE; row++){
+        for(int col = j_pic*SUB_PIC_SIZE; col < (j_pic + 1)*SUB_PIC_SIZE; col++){
+            pixel[row][col][0] = srcPixel[row - i_pic*SUB_PIC_SIZE][col - j_pic*SUB_PIC_SIZE][0];
+            pixel[row][col][1] = srcPixel[row - i_pic*SUB_PIC_SIZE][col - j_pic*SUB_PIC_SIZE][1];
+            pixel[row][col][2] = srcPixel[row - i_pic*SUB_PIC_SIZE][col - j_pic*SUB_PIC_SIZE][2];
         }
     }
 }
