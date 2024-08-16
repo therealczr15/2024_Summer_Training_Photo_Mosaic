@@ -63,7 +63,12 @@ int** Image::conv(int** pixel, vector<vector<double>> kernel, int kerSize)
                     convSum += pixel[row][col] * kernel[k + halfKerSize][l + halfKerSize];
                 }
             }
-            ansPixel[i][j] = min(255, max(0, static_cast<int>(convSum)));
+            if(convSum >= 255.0)
+                ansPixel[i][j] = 255;
+            else if(convSum <= 0)
+                ansPixel[i][j] = 0;
+            else
+                ansPixel[i][j] = convSum;
         }
     }
     for(int i = 0; i < _h; i++)

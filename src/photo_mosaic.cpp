@@ -1,118 +1,182 @@
 # include "photo_mosaic.h"
 
-# define SUB_IMG_SIZE 32
-
-using namespace std;
-
 // ===== Initialize Data Loader =====
 Data_Loader PhotoMosaic::dl;
 
 // ===== Constructor =====
-
-PhotoMosaic::PhotoMosaic(string filename, string directoryPath)
+PhotoMosaic::PhotoMosaic()
 {
-    tgtImg.LoadImage(filename);
-    dl.List_Directory(directoryPath, directoryImg);
+    trgImg = nullptr;
 }
 
 // ===== Destructor =====
 PhotoMosaic::~PhotoMosaic()
 {
-    ;
+    delete trgImg;
 }
 
-//
-void PhotoMosaic::GetPhotoMosaic(int sub_img_size)
+// ===== Public Member Function =====
+
+Image* PhotoMosaic::Execute(string trgPath, string srcPath)
 {
-    int h = tgtImg.get_height();
-    int w = tgtImg.get_width();
-    h = int( round( h * 1.0 / sub_img_size ) ) * sub_img_size;
-    w = int( round( w * 1.0 / sub_img_size ) ) * sub_img_size;
+    //==================================================
+    // Load images
+    trgImg = new RGBImage();
+    trgImg->LoadImage(trgPath);
 
-    tgtImg.Scaling(h, w);
+    vector<string> srcFilenames;
+    Image** srcImgs = new Image*[SRC_TOTAL_NUM];
+    for(int i = 0; i < SRC_TOTAL_NUM; i++)
+        srcImgs[i] = new RGBImage();
+    int numSrc = 0;
 
-    tgtImg.Display_X_Server();
-       
-    vector<RGBImage> allImg (directoryImg.size());
-    for(int i = 0; i < directoryImg.size(); i++)
-        allImg[i].LoadImage(directoryImg[i]);
+    dl.List_Directory(srcPath, srcFilenames);
+    for(string srcFilename : srcFilenames){
+        if(srcImgs[numSrc]->LoadImage(srcFilename))
+            numSrc++;
+        if(numSrc == SRC_TOTAL_NUM)
+            break;
+    }
 
-    vector<vector<double>> allImgRGB (directoryImg.size(), vector<double> (3));
-    for(int i = 0; i < directoryImg.size(); i++)
-    {
-        double meanR = 0, meanG = 0, meanB = 0;
-        for(int j = 0; j < allImg[i].get_height(); j++)
-        {
-            for(int k = 0; k < allImg[i].get_width(); k++)
-            {
-                meanR += allImg[i].GetPixel()[j][k][0];
-                meanG += allImg[i].GetPixel()[j][k][1];
-                meanB += allImg[i].GetPixel()[j][k][2];
-            }
-        }
-        meanR = meanR * 1.0 / (allImg[i].get_height() * allImg[i].get_width());
-        meanG = meanG * 1.0 / (allImg[i].get_height() * allImg[i].get_width());
-        meanB = meanB * 1.0 / (allImg[i].get_height() * allImg[i].get_width());
+    cout << "Load images finished" << endl;
 
-        allImgRGB[i][0] = meanR;
-        allImgRGB[i][1] = meanG;
-        allImgRGB[i][2] = meanB;
+    //==================================================
+    // Scale images into appropriate size
+    int newH, newW;
+    double factor;
+
+    newH = SUB_PIC_SIZE * SUB_PIC_NUM;
+    factor = (double)newH / (double)trgImg->get_height();
+    newW = ((int)(factor * trgImg->get_width()) / SUB_PIC_SIZE) * SUB_PIC_SIZE; 
+
+    //cout << "Origin target(H, W) = (" << trgImg->get_height() << " ," << trgImg->get_width() << ")" << endl;
+    Scaling(trgImg, newH, newW);
+    //cout << "New target(H, W) = (" << trgImg->get_height() << " ," << trgImg->get_width() << ")" << endl;
+    for(int i = 0; i < numSrc; i++){
+        //if(i == 0) cout << "Origin source(H, W) = (" << srcImgs[i]->get_height() << " ," << srcImgs[i]->get_width() << ")" << endl;
+        Scaling(srcImgs[i], SUB_PIC_SIZE, SUB_PIC_SIZE);
+        //if(i == 0) cout << "Origin source(H, W) = (" << srcImgs[i]->get_height() << " ," << srcImgs[i]->get_width() << ")" << endl;
     }
     
-    for(int i = 0; i < h; i += sub_img_size)
-    {
-        for(int j = 0; j < w; j += sub_img_size)
-        {
-            double meanR = 0, meanG = 0, meanB = 0;
-            for(int k = 0; k < sub_img_size; k++)
-            {
-                for(int l = 0; l < sub_img_size; l++)
-                {
-                    int row = i + k;
-                    int col = j + l;
-                    meanR += tgtImg.GetPixel()[row][col][0];
-                    meanG += tgtImg.GetPixel()[row][col][1];
-                    meanB += tgtImg.GetPixel()[row][col][2];
-                }
-            }
-            meanR = meanR * 1.0 / (sub_img_size * sub_img_size);
-            meanG = meanG * 1.0 / (sub_img_size * sub_img_size);
-            meanB = meanB * 1.0 / (sub_img_size * sub_img_size);
+    cout << "Scale images finished" << endl;
 
-            double diffR, diffG, diffB, diff;
-            double diffMin = DBL_MAX;
-            int minIdx;
-            for(int m = 0; m < directoryImg.size(); m++)
-            {
-                diffR = meanR - allImgRGB[m][0];
-                diffG = meanG - allImgRGB[m][1];
-                diffB = meanB - allImgRGB[m][2];
-                diff = sqrt(diffR * diffR + diffG * diffG + diffB * diffB);
-                if(diff < diffMin)
-                {
-                    diffMin = diff;
-                    minIdx = m;
-                }
-            }
+    //==================================================
+    // Calculate average of each source image
+    vector<int> srcAvgR, srcAvgG, srcAvgB;
 
-            for(int k = 0; k < sub_img_size; k++)
-            {
-                for(int l = 0; l < sub_img_size; l++)
-                {
-                    int row = i + k;
-                    int col = j + l;
-                    for(int n = 0; n < 3; n++)
-                    {
-                        if(sub_img_size != SUB_IMG_SIZE)
-                            allImg[minIdx].Scaling(sub_img_size, sub_img_size);
-                        tgtImg.pixel[row][col][n] = allImg[minIdx].pixel[k][l][n];
-                    }
+    for(int i_src; i_src < numSrc; i_src++){
+        CalSrcAvg(srcImgs[i_src], srcAvgR, srcAvgG, srcAvgB);
+    }
+
+    cout << "Calculate srcAvg finished" << endl;
+
+    //==================================================
+    // Calculate average of each target image
+    vector<vector<int> > trgAvgR ,trgAvgG ,trgAvgB;
+    int tmpR ,tmpG ,tmpB;
+
+    trgAvgR.resize(SUB_PIC_NUM, vector<int>(SUB_PIC_NUM));
+    trgAvgG.resize(SUB_PIC_NUM, vector<int>(SUB_PIC_NUM));
+    trgAvgB.resize(SUB_PIC_NUM, vector<int>(SUB_PIC_NUM));
+    for(int i_pic = 0; i_pic < SUB_PIC_NUM; i_pic++){
+        for(int j_pic = 0; j_pic < SUB_PIC_NUM; j_pic++){
+            tmpR = tmpG = tmpB = 0; 
+            for(int row = i_pic*SUB_PIC_SIZE; row < (i_pic + 1)*SUB_PIC_SIZE; row++){
+                for(int col = j_pic*SUB_PIC_SIZE; col < (j_pic + 1)*SUB_PIC_SIZE; col++){
+                    tmpR += trgImg->pixel[row][col][0];
+                    tmpG += trgImg->pixel[row][col][1];
+                    tmpB += trgImg->pixel[row][col][2];
                 }
             }
+            trgAvgR[i_pic][j_pic] = int(tmpR / (SUB_PIC_SIZE * SUB_PIC_SIZE));
+            trgAvgG[i_pic][j_pic] = int(tmpG / (SUB_PIC_SIZE * SUB_PIC_SIZE));
+            trgAvgB[i_pic][j_pic] = int(tmpB / (SUB_PIC_SIZE * SUB_PIC_SIZE));
         }
     }
 
-    tgtImg.Display_X_Server();
-    tgtImg.DumpImage("PhotoMosaic.jpg");
+    cout << "Calculate trgAvg finished" << endl;
 
+    //==================================================
+    // Find minimum difference index
+    vector<vector<int> > minDiffIdxs;
+    int minDiffIdx;
+    double rDiff, gDiff, bDiff, minDiff, diff;
+
+    minDiffIdxs.resize(SUB_PIC_NUM, vector<int>(SUB_PIC_NUM, 0));
+    for(int i_pic = 0; i_pic < SUB_PIC_NUM; i_pic++){
+        for(int j_pic = 0; j_pic < SUB_PIC_NUM; j_pic++){
+            minDiff = 442; // sqrt(255^2 * 3)
+            for(int i_src = 0; i_src; i_src++){
+                rDiff = trgAvgR[i_pic][j_pic] - srcAvgR[i_src];
+                gDiff = trgAvgG[i_pic][j_pic] - srcAvgG[i_src];
+                bDiff = trgAvgB[i_pic][j_pic] - srcAvgB[i_src];
+                diff = sqrt(rDiff*rDiff + gDiff*gDiff + bDiff*bDiff);
+                if(minDiff > diff){
+                    minDiff = diff;
+                    minDiffIdx = i_src;
+                }
+            }
+            minDiffIdxs[i_pic][j_pic] = minDiffIdx;
+        }
+    }
+
+    cout << "Find minDiffIdx finished" << endl;
+
+    //==================================================
+    // Set corresponding source images into target image
+    Image* ansImage = new RGBImage();
+    int*** tmpPixel;
+    
+    AllocateAns(ansImage, newH, newW);
+
+    for(int i_pic = 0; i_pic < SUB_PIC_NUM; i_pic++){
+        for(int j_pic = 0; j_pic < SUB_PIC_NUM; j_pic++){
+            minDiffIdx = minDiffIdxs[i_pic][j_pic];
+            tmpPixel = GetPixel(srcImgs[minDiffIdx]);
+            SetSrc2Trg(ansImage, tmpPixel, i_pic, j_pic);
+        }
+    }
+
+    cout << "Photo Mosaic finished" << endl;
+
+    ansImage -> DumpImage("./result/test.jpg");
+
+    //==================================================
+    //Free memory
+    for(int i = 0; i < numSrc; i++)
+        delete srcImgs[i];
+    delete[] srcImgs;
+
+    srcAvgR.clear();
+    srcAvgG.clear();
+    srcAvgB.clear();
+
+    for(int i = 0; i < SUB_PIC_NUM; i++){
+        trgAvgR[i].clear();
+        trgAvgG[i].clear();
+        trgAvgB[i].clear();
+    }
+    trgAvgR.clear();
+    trgAvgG.clear();
+    trgAvgB.clear();
+
+    cout << "Free finished" << endl;
+
+    return ansImage;
+}
+
+void CalSrcAvg(Image* img, vector<int>& srcAvgR, vector<int>& srcAvgG, vector<int>& srcAvgB){
+    img -> CalSrcAvg(srcAvgR, srcAvgG, srcAvgB);
+}
+
+void AllocateAns(Image* img, int newH, int newW){
+    img -> AllocateAns(newH, newW);
+}
+
+int*** GetPixel(Image* img){
+    return img -> GetPixel();
+}
+
+void SetSrc2Trg(Image* trg, int*** srcPixel, int i_pic, int j_pic){
+    trg -> SetSrc2Trg(srcPixel, i_pic, j_pic);
 }
