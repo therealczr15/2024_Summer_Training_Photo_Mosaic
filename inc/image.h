@@ -70,13 +70,17 @@ class Image
         virtual void MaxRGB() = 0;
         virtual void GrayWorld() = 0;
 
-        // Saturation Adjustment
+        // Special Function
         virtual void SaturationEnhance(double gamma) = 0;
+        virtual void EdgeDetection() = 0;
+        virtual void SwirlFilter(double strength) = 0;
+        virtual void FishEyeFilter() = 0;
         
         // Color Grading
         virtual void SepiaTone() = 0;
         virtual void CoolTone() = 0;
         virtual void WarmTone() = 0;
+        virtual void DuoTone(int mode) = 0;
         virtual void NegativeFilm() = 0;
 
         // Member Function

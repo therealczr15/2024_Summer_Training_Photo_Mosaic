@@ -4,6 +4,7 @@
 # include "image.h"
 # include "gray_image.h"
 # include "rgb_image.h"
+# include "photo_mosaic.h"
 
 // Scaling
 void Scaling(Image* img, int newH, int newW);
@@ -39,19 +40,24 @@ void HistogramEqualization(Image* img);
 void MaxRGB(Image* img);
 void GrayWorld(Image* img);
 
-// Saturation Adjustment
+// Special Function
 void SaturationEnhance(Image* img, double gamma);
+void EdgeDetection(Image* img);
+void SwirlFilter(Image* img, double strength);
+void FishEyeFilter(Image* img);
 
 // Color Grading
 void SepiaTone(Image* img);
 void CoolTone(Image* img);
 void WarmTone(Image* img);
+void DuoTone(Image* img, int mode);
 void NegativeFilm(Image* img);
 
 // API
 void Filter(Image* img);
 void LoadOptions(uint32_t &options, int case_n);
 void RunOptions(Image* img, uint32_t options);
-
+void Introduction();
+void PM(PhotoMosaic pm);
 
 # endif

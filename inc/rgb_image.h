@@ -65,13 +65,17 @@ class RGBImage : public Image
         void MaxRGB();
         void GrayWorld();
 
-        // Saturation Adjustment
+        // Special Function
         void SaturationEnhance(double gamma);
+        void EdgeDetection();
+        void SwirlFilter(double strength);
+        void FishEyeFilter();
 
         // Color Grading
         void SepiaTone();
         void CoolTone();
         void WarmTone();
+        void DuoTone(int mode);
         void NegativeFilm();
 };
 
