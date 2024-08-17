@@ -2,13 +2,13 @@
  
 using namespace std;
 
-# define SUB_PIC_SIZE   32      // size of src image
-# define SUB_PIC_NUM    32      // number of src image at one side of target image
-
-# define SRC_TOTAL_NUM  10      // total number of src image
-
 // ===== Constructor =====
 RGBImage::RGBImage(): Image(0, 0)
+{
+    pixel = NULL;
+}
+
+RGBImage::RGBImage(int w, int h): Image(w, h)
 {
     pixel = NULL;
 }
@@ -21,7 +21,6 @@ RGBImage::RGBImage(int w, int h, int*** p) : Image(w, h)
 // ===== Destructor =====
 RGBImage::~RGBImage()
 {
-    //cout << "Delete RGBImage successfully!" << endl;
     for(int i = 0; i < _h; i++)
         for(int j = 0; j < _w; j++)
             delete[] pixel[i][j];
@@ -61,6 +60,11 @@ void RGBImage::Display_CMD()
     dl.Display_RGB_CMD(filename);
 }
 
+int*** RGBImage::GetPixel()
+{
+    return pixel;
+}
+
 // ===== Color Space Transformation
 void RGBImage::RGB2YCrCb(int*** Y, int*** Cr, int*** Cb)
 {
@@ -69,7 +73,6 @@ void RGBImage::RGB2YCrCb(int*** Y, int*** Cr, int*** Cb)
     {
         for(int j = 0; j < _w; j++)
         {
-            //cout << i << " " << j << endl;
             (*Y) [i][j] = pixel[i][j][0] * 0.299 + pixel[i][j][1] * 0.587 + pixel[i][j][2] * 0.114;
             (*Cr)[i][j] = (pixel[i][j][0] - (*Y) [i][j]) * 0.713 + 128.0;
             (*Cb)[i][j] = (pixel[i][j][2] - (*Y) [i][j]) * 0.564 + 128.0;
@@ -77,53 +80,78 @@ void RGBImage::RGB2YCrCb(int*** Y, int*** Cr, int*** Cb)
     }
 }
 
-/*void RGBImage::RGB2HSI(double*** H, double*** S, double*** I)
+void RGBImage::RGB2HSI(double*** H, double*** S, double*** I)
 {
-
-}*/
-
-void RGBImage::YCrCb2RGB(int** Y, int** Cr, int** Cb)
-{
-    int R, G, B;
+    int r, g, b, min;
     for(int i = 0; i < _h; i++)
     {
         for(int j = 0; j < _w; j++)
         {
-            R = Y[i][j] + 1.403 * (Cr[i][j] - 128);
-            G = Y[i][j] - 0.714 * (Cr[i][j] - 128) - 0.344 * (Cb[i][j] - 128);
-            B = Y[i][j] + 1.773 * (Cb[i][j] - 128);
+            r = pixel[i][j][0];
+            g = pixel[i][j][1];
+            b = pixel[i][j][2];
 
-            // to avoid R going beyond the range
-            if(R >= 255)
-                pixel[i][j][0] = 255;
-            else if(R <= 0)
-                pixel[i][j][0] = 0;
+            min = b;
+            if(g < min)
+                min = g;
+            if(r < min)
+                min = r;
+            double theta = acos( 0.5 * (r-g+r-b) / sqrt( pow(r-g,2) + (r-b) * (g-b) ) );
+            (*I) [i][j] = (r + g + b) / 3.0;
+            if((*I) [i][j] == 0)
+                (*S) [i][j] = 0;
             else
-                pixel[i][j][0] = R;
-            
-            // to avoid G going beyond the range
-            if(G >= 255)
-                pixel[i][j][1] = 255;
-            else if(G <= 0)
-                pixel[i][j][1] = 0;
-            else
-                pixel[i][j][1] = G;
-            
-            // to avoid B going beyond the range
-            if(B >= 255)
-                pixel[i][j][2] = 255;
-            else if(B <= 0)
-                pixel[i][j][2] = 0;
-            else
-                pixel[i][j][2] = B;
+                (*S) [i][j] = 1.0 - 3.0 * min / (r + g + b);
+            (*H) [i][j] = (b <= g) ? theta : 2 * M_PI - theta;              
         }
     }
 }
 
-/*void RGBImage::HSI2RGB(double** H, double** S, double** I)
+void RGBImage::YCrCb2RGB(int** Y, int** Cr, int** Cb)
 {
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(Y[i][j] + 1.403 * (Cr[i][j] - 128))));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(Y[i][j] - 0.714 * (Cr[i][j] - 128) - 0.344 * (Cb[i][j] - 128))));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(Y[i][j] + 1.773 * (Cb[i][j] - 128))));
+        }
+    }
+}
 
-}*/
+void RGBImage::HSI2RGB(double** H, double** S, double** I)
+{
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            double r, g ,b;
+            if(0 <= H[i][j] && H[i][j] < 2.0 * M_PI / 3.0)
+            {
+                b = (1.0 - S[i][j]) * I[i][j];
+                r = (1.0 + S[i][j] * cos(H[i][j]) / cos(M_PI / 3.0 - H[i][j]) ) * I[i][j];
+                g = 3 * I[i][j] - (r + b);
+            }
+            else if(2.0 * M_PI / 3.0 <= H[i][j] && H[i][j] < 4.0 * M_PI / 3.0)
+            {
+                r = (1.0 - S[i][j]) * I[i][j];
+                g = (1.0 + S[i][j] * cos(H[i][j] - 2.0 * M_PI / 3.0) / cos(M_PI - H[i][j]) ) * I[i][j];
+                b = 3 * I[i][j] - (r + g);
+            }
+            else if(4.0 * M_PI / 3.0 <= H[i][j] && H[i][j] < 2.0 * M_PI)
+            {
+                g = (1.0 - S[i][j]) * I[i][j];
+                b = (1.0 + S[i][j] * cos(H[i][j] - 4.0 * M_PI / 3.0) / cos(5.0 * M_PI / 3.0 - H[i][j]) ) * I[i][j];
+                r = 3 * I[i][j] - (g + b);
+            }
+
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(r)));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(g)));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(b)));
+        }
+    }
+}
 
 // ===== Scaling =====
 int RGBImage::bilinear(int i, int j, int k, int newH, int newW)
@@ -140,9 +168,20 @@ int RGBImage::bilinear(int i, int j, int k, int newH, int newW)
 
     // get 4 nearest pixels of the original position
 	int x0 = floor(x);
+    if(x0 < 0)
+        x0 = 0;
+
 	int x1 = ceil(x);
+    if(x1 >= _h)
+        x1 = _h - 1;
+
 	int y0 = floor(y);
+    if(y0 < 0)
+        y0 = 0;
+
 	int y1 = ceil(y);
+    if(y1 >= _w)
+        y1 = _w - 1;
 
     // bilinear interpolation
 	double dx0 = x - x0;
@@ -180,7 +219,8 @@ void RGBImage::Scaling(int newH, int newW)
     for(int i = 0; i < newH; i++)
         for(int j = 0; j < newW; j++)
             for(int k = 0; k < 3; k++)
-                newPixel[i][j][k] = bilinear(i, j, k, newH, newW);
+                newPixel[i][j][k] = bilinear(i, j, k, newH, newW);        
+
 
     for(int i = 0; i < _h; i++)
         for(int j = 0; j < _w; j++)
@@ -205,7 +245,6 @@ void RGBImage::Scaling(int newH, int newW)
             for(int k = 0; k < 3; k++)
                 pixel[i][j][k] = newPixel[i][j][k];
     
-
     for(int i = 0; i < _h; i++)
         for(int j = 0; j < _w; j++)
             delete[] newPixel[i][j];
@@ -273,7 +312,7 @@ void RGBImage::LaplacianFilter_A()
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> LaplacianKernel = {  { 0, -1,  0},
-                                                {-1,  4, -1},
+                                                {-1,  5, -1},
                                                 { 0, -1,  0}}; 
     Y = conv(Y, LaplacianKernel, 3);
 
@@ -307,7 +346,7 @@ void RGBImage::LaplacianFilter_B()
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> LaplacianKernel = {  {-1, -1, -1},
-                                                {-1,  8, -1},
+                                                {-1,  9, -1},
                                                 {-1, -1, -1}}; 
     Y = conv(Y, LaplacianKernel, 3);
 
@@ -341,7 +380,7 @@ void RGBImage::PrewittFilter_H()
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> PrewittKernel = {    {-1, 0, 1},
-                                                {-1, 0, 1},
+                                                {-1, 1, 1},
                                                 {-1, 0, 1}}; 
     Y = conv(Y, PrewittKernel, 3);
 
@@ -375,7 +414,7 @@ void RGBImage::PrewittFilter_V()
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> PrewittKernel = {    { 1,  1,  1},
-                                                { 0,  0,  0},
+                                                { 0,  1,  0},
                                                 {-1, -1, -1}}; 
     Y = conv(Y, PrewittKernel, 3);
 
@@ -409,7 +448,7 @@ void RGBImage::SobelFilter_H()
     RGB2YCrCb(&Y, &Cr, &Cb);
 
     vector<vector<double>> SobelKernel = {      {1, 0, -1},
-                                                {2, 0, -2},
+                                                {2, 1, -2},
                                                 {1, 0, -1}}; 
     Y = conv(Y, SobelKernel, 3);
 
@@ -443,9 +482,44 @@ void RGBImage::SobelFilter_V()
     RGB2YCrCb(&Y, &Cr, &Cb);
     
     vector<vector<double>> SobelKernel = {      { 1,  2,  1},
-                                                { 0,  0,  0},
+                                                { 0,  1,  0},
                                                 {-1, -2, -1}}; 
     Y = conv(Y, SobelKernel, 3);
+
+    YCrCb2RGB(Y, Cr, Cb);
+
+    // Free Y, Cr & Cb's memory
+    for(int i = 0; i < _h; i++)
+    {
+        delete[] Y[i];
+        delete[] Cr[i];
+        delete[] Cb[i];
+    }
+    delete[] Y;
+    delete[] Cr;
+    delete[] Cb;
+}
+
+void RGBImage::EmbossFilter()
+{
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
+
+    RGB2YCrCb(&Y, &Cr, &Cb);
+
+    vector<vector<double>> EmbossKernel = {     {-2, -1,  0},
+                                                {-1,  1,  1},
+                                                { 0,  1,  2}}; 
+    
+    Y = conv(Y, EmbossKernel, 3);
 
     YCrCb2RGB(Y, Cr, Cb);
 
@@ -481,7 +555,7 @@ void RGBImage::BoxFilter(int kerSize)
     for(int i = 0; i < kerSize; i++)
         for(int j = 0; j < kerSize; j++)
             BoxKernel[i][j] = 1.0 / (kerSize * kerSize);
-    //int** tmpY;
+
     Y = conv(Y, BoxKernel, kerSize);
 
     YCrCb2RGB(Y, Cr, Cb);
@@ -534,14 +608,6 @@ void RGBImage::GaussianFilter(int kerSize)
         for(int j = 0; j < kerSize; j++)
             GaussianKernel[i][j] /= sum;
 
-    for(int i = 0; i < kerSize; i++)
-    {
-        for(int j = 0; j < kerSize; j++)
-            cout << GaussianKernel[i][j] <<" ";
-        cout << endl;
-    }
-
-    //int** tmpY;
     Y = conv(Y, GaussianKernel, kerSize);
 
     YCrCb2RGB(Y, Cr, Cb);
@@ -676,6 +742,74 @@ void RGBImage::MosaicFilter(int kerSize)
     delete[] Cb;
 }
 
+void RGBImage::MotionBlur(int kerSize, double theta)
+{
+
+    vector<vector<double>> kernel(kerSize, vector<double>(kerSize));
+    double rad = theta * M_PI / 180.0;
+    int center = kerSize / 2;
+
+    // Populate the kernel
+    for (int i = 0; i < kerSize; i++) 
+    {
+        int x = i - center;
+        int y = static_cast<int>(round(x * tan(rad)));
+        int row = center + y;
+        int col = i;
+        if (row >= 0 && row < kerSize)
+            kernel[row][col] = 1.0;
+    }
+
+    // Normalize the kernel so that the sum of all elements is 1
+    double sum = 0;
+    for (int i = 0; i < kerSize; i++)
+        for (int j = 0; j < kerSize; j++)
+            sum += kernel[i][j];
+    
+    if (sum != 0) 
+        for (int i = 0; i < kerSize; i++)
+            for (int j = 0; j < kerSize; j++)
+                kernel[i][j] /= sum;
+
+    int** tmpPixel = new int* [_h];
+    for(int i = 0; i < _h; i++)
+        tmpPixel[i] = new int [_w];
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            tmpPixel[i][j] = pixel[i][j][0];
+
+    tmpPixel = conv(tmpPixel, kernel, kerSize);
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j][0] = tmpPixel[i][j];
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            tmpPixel[i][j] = pixel[i][j][1];
+
+    tmpPixel = conv(tmpPixel, kernel, kerSize);
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j][1] = tmpPixel[i][j];
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            tmpPixel[i][j] = pixel[i][j][2];
+
+    tmpPixel = conv(tmpPixel, kernel, kerSize);
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            pixel[i][j][2] = tmpPixel[i][j];
+
+    for(int i = 0; i < _h; i++)
+        delete[] tmpPixel[i];
+    delete[] tmpPixel;
+}
+
 // ===== Brightness Adjustment =====
 void RGBImage::StaticEnhance(double alpha, double beta)
 {
@@ -692,20 +826,9 @@ void RGBImage::StaticEnhance(double alpha, double beta)
 
     RGB2YCrCb(&Y, &Cr, &Cb);
 
-    double tmp;
     for(int i = 0; i < _h; i++)
-    {
         for(int j = 0; j < _w; j++)
-        {
-            tmp = Y[i][j] * alpha + beta;
-            if(tmp >= 255.0)
-                Y[i][j] = 255;
-            else if(tmp <= 0)
-                Y[i][j] = 0;
-            else
-                Y[i][j] = tmp;
-        }       
-    }
+            Y[i][j] = min(255, max(0, static_cast<int>(Y[i][j] * alpha + beta)));
     YCrCb2RGB(Y, Cr, Cb);
 
     // Free Y, Cr & Cb's memory
@@ -796,20 +919,9 @@ void RGBImage::HistogramEqualization()
     }
 
     // Get Histogram Equalization Result
-    double result;
     for(int i = 0; i < _h; i++)
-    {
         for(int j = 0; j < _w; j++)
-        {
-            result = 255 * cdf[Y[i][j]];
-            if(result >= 255)
-                Y[i][j] = 255;
-            else if(result <= 0)
-                Y[i][j] = 0;
-            else
-                Y[i][j] = result;
-        }
-    }
+            Y[i][j] = min(255, max(0, static_cast<int>(255 * cdf[Y[i][j]])));
 
     YCrCb2RGB(Y, Cr, Cb);
 
@@ -849,34 +961,13 @@ void RGBImage::MaxRGB()
     double ratioG = 255.0 / maxG;
     double ratioB = 255.0 / maxB;
 
-    double resultR, resultG, resultB;
     for(int i = 0; i < _h; i++)
     {
         for(int j = 0; j < _w; j++)
         {
-            resultR = pixel[i][j][0] * ratioR;
-            if(resultR >= 255)
-                pixel[i][j][0] = 255;
-            else if(resultR <= 0)
-                pixel[i][j][0] = 0;
-            else
-                pixel[i][j][0] = resultR;
-
-            resultG = pixel[i][j][1] * ratioG;
-            if(resultG >= 255)
-                pixel[i][j][1] = 255;
-            else if(resultG <= 0)
-                pixel[i][j][1] = 0;
-            else
-                pixel[i][j][1] = resultG;
-
-            resultB = pixel[i][j][2] * ratioB;
-            if(resultB >= 255)
-                pixel[i][j][2] = 255;
-            else if(resultB <= 0)
-                pixel[i][j][2] = 0;
-            else
-                pixel[i][j][2] = resultB;
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(pixel[i][j][0] * ratioR)));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(pixel[i][j][1] * ratioG)));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(pixel[i][j][2] * ratioB)));
         }
     }
 }
@@ -907,74 +998,328 @@ void RGBImage::GrayWorld()
 	ratioG = (meanR + meanG + meanB) / (3.0 * meanG);
 	ratioB = (meanR + meanG + meanB) / (3.0 * meanB);
 
-    double resultR, resultG, resultB;
     for(int i = 0; i < _h; i++)
     {
         for(int j = 0; j < _w; j++)
         {
-            resultR = pixel[i][j][0] * ratioR;
-            if(resultR >= 255)
-                pixel[i][j][0] = 255;
-            else if(resultR <= 0)
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(pixel[i][j][0] * ratioR)));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(pixel[i][j][1] * ratioG)));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(pixel[i][j][2] * ratioB)));
+        }
+    }
+}
+
+// ===== Special Function =====
+void RGBImage::SaturationEnhance(double gamma)
+{
+    // Allocate H, S & I's memory
+    double** H = new double* [_h];
+    double** S = new double* [_h];
+    double** I = new double* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        H[i] = new double[_w];
+        S[i] = new double[_w];
+        I[i] = new double[_w];
+    }
+
+    RGB2HSI(&H, &S, &I);
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w ; j++)
+            S[i][j] = min(1.0, pow(S[i][j] , gamma));
+
+    HSI2RGB(H,S,I);
+
+    for(int i = 0; i < _h; i++)
+    {
+        delete[] H[i];
+        delete[] S[i];
+        delete[] I[i];
+    }
+    delete[] H;
+    delete[] S;
+    delete[] I;
+}
+
+void RGBImage::EdgeDetection()
+{
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
+
+    RGB2YCrCb(&Y, &Cr, &Cb);
+    
+    int** newY = new int* [_h];
+    for(int i = 0; i < _h; i++)
+        newY[i] = new int[_w];
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            newY[i][j] = Y[i][j];
+
+    vector<vector<double>> SobelKernel_H = {    {1, 0, -1},
+                                                {2, 0, -2},
+                                                {1, 0, -1}}; 
+    newY = conv(newY, SobelKernel_H, 3);
+
+    vector<vector<double>> SobelKernel_V = {    { 1,  2,  1},
+                                                { 0,  0,  0},
+                                                {-1, -2, -1}}; 
+    Y = conv(Y, SobelKernel_V, 3);
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            Y[i][j] = min(255, max(0, static_cast<int>(sqrt(newY[i][j] * newY[i][j] + Y[i][j] * Y[i][j]))));
+
+    for(int i = 0; i < _h; i++)
+        delete[] newY[i];
+    delete[] newY;
+
+    YCrCb2RGB(Y, Cr, Cb);
+
+    // Free Y, Cr & Cb's memory
+    for(int i = 0; i < _h; i++)
+    {
+        delete[] Y[i];
+        delete[] Cr[i];
+        delete[] Cb[i];
+    }
+    delete[] Y;
+    delete[] Cr;
+    delete[] Cb;
+}
+
+void RGBImage::SwirlFilter(double strength)
+{
+    int*** newPixel = new int** [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        newPixel[i] = new int* [_w];
+        for(int j = 0; j < _w; j++)
+            newPixel[i][j] = new int[3];
+    }
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            for(int k = 0; k < 3; k++)
+                newPixel[i][j][k] = pixel[i][j][k];
+
+    int centerY = _h / 2;
+    int centerX = _w / 2;
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            int dy = i - centerY;
+            int dx = j - centerX;
+            double radius = sqrt(dx * dx + dy * dy);
+            double angle = atan2(dy, dx) + strength * (sqrt(_h * _h + _w * _w) - radius) / sqrt(_h * _h + _w * _w);
+            int newI = static_cast<int>(centerY + radius * sin(angle));
+            int newJ = static_cast<int>(centerX + radius * cos(angle));
+            if(newI >= 0 && newI < _h && newJ >= 0 && newJ < _w)
+            {
+                pixel[i][j][0] = newPixel[newI][newJ][0];
+                pixel[i][j][1] = newPixel[newI][newJ][1];
+                pixel[i][j][2] = newPixel[newI][newJ][2];
+            }
+        }
+    }
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            delete[] newPixel[i][j];
+    for(int i = 0; i < _h; i++)
+        delete[] newPixel[i];
+    delete[] newPixel;
+}
+
+void RGBImage::FishEyeFilter()
+{
+    int*** newPixel = new int** [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        newPixel[i] = new int* [_w];
+        for(int j = 0; j < _w; j++)
+            newPixel[i][j] = new int[3];
+    }
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            for(int k = 0; k < 3; k++)
+                newPixel[i][j][k] = pixel[i][j][k];
+
+    int centerY = _h / 2;
+    int centerX = _w / 2;
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            int dy = i - centerY;
+            int dx = j - centerX;
+            double distance = sqrt(dx * dx + dy * dy);
+            if(distance > min(centerX, centerY))
+            {
                 pixel[i][j][0] = 0;
-            else
-                pixel[i][j][0] = resultR;
-
-            resultG = pixel[i][j][1] * ratioG;
-            if(resultG >= 255)
-                pixel[i][j][1] = 255;
-            else if(resultG <= 0)
                 pixel[i][j][1] = 0;
-            else
-                pixel[i][j][1] = resultG;
-
-            resultB = pixel[i][j][2] * ratioB;
-            if(resultB >= 255)
-                pixel[i][j][2] = 255;
-            else if(resultB <= 0)
                 pixel[i][j][2] = 0;
+                continue;
+            }
+            double normalizeR = distance / min(centerX, centerY);
+            double angle = atan2(dy, dx);
+            double radius;
+            double strength = 1.0 + 3.0 * normalizeR;
+            radius = pow(normalizeR, strength) * min(centerX, centerY);
+            int newI = static_cast<int>(centerY + radius * sin(angle));
+            int newJ = static_cast<int>(centerX + radius * cos(angle));
+            if(newI >= 0 && newI < _h && newJ >= 0 && newJ < _w)
+            {
+                pixel[i][j][0] = newPixel[newI][newJ][0];
+                pixel[i][j][1] = newPixel[newI][newJ][1];
+                pixel[i][j][2] = newPixel[newI][newJ][2];
+            }
             else
-                pixel[i][j][2] = resultB;
+            {
+                pixel[i][j][0] = 0;
+                pixel[i][j][1] = 0;
+                pixel[i][j][2] = 0;
+            }
+        }
+    }
+
+    for(int i = 0; i < _h; i++)
+        for(int j = 0; j < _w; j++)
+            delete[] newPixel[i][j];
+    for(int i = 0; i < _h; i++)
+        delete[] newPixel[i];
+    delete[] newPixel;
+}
+
+// ===== Color Grading =====
+void RGBImage::SepiaTone()
+{
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(pixel[i][j][0] * 0.393 + pixel[i][j][1] * 0.769 + pixel[i][j][2] * 0.189)));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(pixel[i][j][0] * 0.349 + pixel[i][j][1] * 0.686 + pixel[i][j][2] * 0.168)));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(pixel[i][j][0] * 0.272 + pixel[i][j][1] * 0.534 + pixel[i][j][2] * 0.131)));
         }
     }
 }
 
-void RGBImage::CalSrcAvg(vector<int>& srcAvgR, vector<int>& srcAvgG, vector<int>& srcAvgB){
-    double tmpR, tmpG, tmpB;
-
-    tmpR = tmpG = tmpB = 0;
-    for(int row = 0; row < SUB_PIC_SIZE; row++){
-        for(int col = 0; col < SUB_PIC_SIZE; col++){
-            tmpR += pixel[row][col][0];
-            tmpG += pixel[row][col][1];
-            tmpB += pixel[row][col][2];
+void RGBImage::CoolTone()
+{
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(pixel[i][j][0] * 0.9)));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(pixel[i][j][1] * 1.1)));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(pixel[i][j][2] * 1.2)));
         }
     }
-
-    srcAvgR.push_back(tmpR / (SUB_PIC_SIZE * SUB_PIC_SIZE));
-    srcAvgG.push_back(tmpG / (SUB_PIC_SIZE * SUB_PIC_SIZE));
-    srcAvgB.push_back(tmpB / (SUB_PIC_SIZE * SUB_PIC_SIZE));
 }
 
-void RGBImage::AllocateAns(int newH, int newW){
-    pixel = new int**[newH];
-    for(int i = 0; i < newH; i++){
-        pixel[i] = new int*[newW];
-        for(int j = 0; j < newW; j++)
-            pixel[i][j] = new int[3];
+void RGBImage::WarmTone()
+{
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(pixel[i][j][0] * 1.2)));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(pixel[i][j][1] * 1.1)));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(pixel[i][j][2] * 0.9)));
+        }
     }
 }
 
-int*** RGBImage::GetPixel(){
-    return pixel;
+void RGBImage::DuoTone(int mode)
+{
+    int r1 = 0, g1 = 34, b1 = 102;
+    int r2, g2, b2;
+    switch(mode)
+    {
+        case 1:
+            // Red Tone
+            r2 = 255, g2 = 0, b2 = 0;
+            break;
+        case 2:
+            // Green Tone
+            r2 = 0, g2 = 255, b2 = 0;
+            break;
+        case 3:
+            // Blue Tone
+            r2 = 0, g2 = 0, b2 = 255;
+            break;
+        case 4:
+            // Yellow Tone
+            r2 = 255, g2 = 204, b2 = 0;
+            break;
+        case 5:
+            // Cyan Tone
+            r2 = 0, g2 = 255, b2 = 255;
+            break;
+        case 6:
+            // Pink Tone
+            r2 = 255, g2 = 192, b2 = 203;
+            break;
+        case 7:
+            // Orange Tone
+            r2 = 255, g2 = 77, b2 = 64;
+            break;
+        case 8:
+            // Purple Tone
+            r2 = 106, g2 = 13, b2 = 173;
+            break;
+        default:
+            cout << "   !!!!! ERROR MODE !!!!!\n";
+            exit(1);
+            break;
+    }
+
+    // Allocate Y, Cr & Cb's memory
+    int** Y  = new int* [_h];
+    int** Cr = new int* [_h];
+    int** Cb = new int* [_h];
+    for(int i = 0; i < _h; i++)
+    {
+        Y[i]  = new int[_w];
+        Cr[i] = new int[_w];
+        Cb[i] = new int[_w];
+    }
+
+    RGB2YCrCb(&Y, &Cr, &Cb);
+
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            double y = Y[i][j] / 255.0;
+            pixel[i][j][0] = min(255, max(0, static_cast<int>(r1 * (1 - y) + r2 * y)));
+            pixel[i][j][1] = min(255, max(0, static_cast<int>(g1 * (1 - y) + g2 * y)));
+            pixel[i][j][2] = min(255, max(0, static_cast<int>(b1 * (1 - y) + b2 * y)));           
+        }
+    }
 }
 
-void RGBImage::SetSrc2Trg(int*** srcPixel, int i_pic, int j_pic){
-    for(int row = i_pic*SUB_PIC_SIZE; row < (i_pic + 1)*SUB_PIC_SIZE; row++){
-        for(int col = j_pic*SUB_PIC_SIZE; col < (j_pic + 1)*SUB_PIC_SIZE; col++){
-            pixel[row][col][0] = srcPixel[row - i_pic*SUB_PIC_SIZE][col - j_pic*SUB_PIC_SIZE][0];
-            pixel[row][col][1] = srcPixel[row - i_pic*SUB_PIC_SIZE][col - j_pic*SUB_PIC_SIZE][1];
-            pixel[row][col][2] = srcPixel[row - i_pic*SUB_PIC_SIZE][col - j_pic*SUB_PIC_SIZE][2];
+void RGBImage::NegativeFilm()
+{
+    for(int i = 0; i < _h; i++)
+    {
+        for(int j = 0; j < _w; j++)
+        {
+            pixel[i][j][0] = 255 - pixel[i][j][0];
+            pixel[i][j][1] = 255 - pixel[i][j][1];
+            pixel[i][j][2] = 255 - pixel[i][j][2];
         }
     }
 }
